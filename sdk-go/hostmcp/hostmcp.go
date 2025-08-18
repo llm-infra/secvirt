@@ -33,9 +33,7 @@ func NewSandbox(ctx context.Context, opts ...sandbox.Option) (*Sandbox, error) {
 }
 
 func (s *Sandbox) MCPs(ctx context.Context) ([]MCPEndpoint, error) {
-	resp, err := s.ProxyClient().R().
-		SetContext(ctx).
-		SetHeaders(spec.GenProxyHeader(defaultMcpServerPort, s.ID)).
+	resp, err := s.ProxyRequest(ctx, defaultMcpServerPort).
 		SetResult([]MCPEndpoint{}).
 		SetError(sandbox.ErrorResponse{}).
 		Get("/hostmcp/v1/mcps")
@@ -51,9 +49,7 @@ func (s *Sandbox) MCPs(ctx context.Context) ([]MCPEndpoint, error) {
 }
 
 func (s *Sandbox) Launch(ctx context.Context, cfg *ServersFile, reload bool) (*client.Client, error) {
-	resp, err := s.ProxyClient().R().
-		SetContext(ctx).
-		SetHeaders(spec.GenProxyHeader(defaultMcpServerPort, s.ID)).
+	resp, err := s.ProxyRequest(ctx, defaultMcpServerPort).
 		SetBody(map[string]any{
 			"config": cfg,
 			"reload": reload,
@@ -75,9 +71,9 @@ func (s *Sandbox) Launch(ctx context.Context, cfg *ServersFile, reload bool) (*c
 
 	// 初始化MCP客户端
 	client, err := client.NewStreamableHttpClient(
-		s.ProxyClient().BaseURL+(*result)[0].Path+"mcp",
+		s.ProxyBaseURL()+(*result)[0].Path+"mcp",
 		transport.WithHTTPHeaders(
-			spec.GenProxyHeader(defaultMcpRouterPort, s.ID),
+			spec.GenSandboxHeader(defaultMcpRouterPort, s.ID, ""),
 		),
 	)
 	if err != nil {

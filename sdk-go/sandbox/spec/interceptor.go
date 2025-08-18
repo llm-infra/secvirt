@@ -3,7 +3,6 @@ package spec
 import (
 	"context"
 	"fmt"
-	"net/http"
 
 	"connectrpc.com/connect"
 )
@@ -11,14 +10,16 @@ import (
 const DefaultProxyHostSuffix = ".proxy.com"
 const DefaultEnvdPort = 48008
 
-func GenProxyHeader(port int, sandboxID string) map[string]string {
-	return map[string]string{"X-HOST": fmt.Sprintf("%d-%s%s",
-		port, sandboxID, DefaultProxyHostSuffix)}
-}
+func GenSandboxHeader(port int, sandboxID, user string) map[string]string {
+	headers := map[string]string{
+		"X-HOST": fmt.Sprintf("%d-%s%s", port, sandboxID, DefaultProxyHostSuffix),
+	}
 
-func SetSandboxHeader(header http.Header, port int, sandboxID, user string) {
-	header.Set("X-Host", fmt.Sprintf("%d-%s%s", port, sandboxID, DefaultProxyHostSuffix))
-	header.Set("X-User", user)
+	if len(user) > 0 {
+		headers["X-User"] = user
+	}
+
+	return headers
 }
 
 type headerInterceptor struct {
@@ -34,8 +35,10 @@ func NewHeaderInterceptor(envdPort int, sandboxID string, user string) *headerIn
 func (i *headerInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
 	return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
 		// Set the sandbox header
-		SetSandboxHeader(req.Header(), i.envdPort, i.sandboxID, i.user)
-
+		headers := GenSandboxHeader(i.envdPort, i.sandboxID, i.user)
+		for k, v := range headers {
+			req.Header().Set(k, v)
+		}
 		return next(ctx, req)
 	}
 }
@@ -45,8 +48,10 @@ func (i *headerInterceptor) WrapStreamingClient(next connect.StreamingClientFunc
 		conn := next(ctx, spec)
 
 		// Set the sandbox header
-		SetSandboxHeader(conn.RequestHeader(), i.envdPort, i.sandboxID, i.user)
-
+		headers := GenSandboxHeader(i.envdPort, i.sandboxID, i.user)
+		for k, v := range headers {
+			conn.RequestHeader().Set(k, v)
+		}
 		return conn
 	}
 }

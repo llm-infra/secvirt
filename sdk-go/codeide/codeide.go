@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/llm-infra/secvirt/sdk-go/sandbox"
-	"github.com/llm-infra/secvirt/sdk-go/sandbox/spec"
 	"github.com/mel2oo/go-dkit/json"
 )
 
@@ -29,9 +28,7 @@ func NewSandbox(ctx context.Context, opts ...sandbox.Option) (*Sandbox, error) {
 }
 
 func (s *Sandbox) Packages(ctx context.Context, lang string) ([]PackagesResponse, error) {
-	resp, err := s.ProxyClient().R().
-		SetContext(ctx).
-		SetHeaders(spec.GenProxyHeader(defaultCodeIDEPort, s.ID)).
+	resp, err := s.ProxyRequest(ctx, defaultCodeIDEPort).
 		SetResult([]PackagesResponse{}).
 		SetError(sandbox.ErrorResponse{}).
 		Get(fmt.Sprintf("/codeide/v1/packages/%s", lang))
@@ -48,9 +45,7 @@ func (s *Sandbox) Packages(ctx context.Context, lang string) ([]PackagesResponse
 
 func (s *Sandbox) RunCodeV1(ctx context.Context, lang, code string,
 	inputs map[string]any) (*RunCodeResponseV1, error) {
-	resp, err := s.ProxyClient().R().
-		SetContext(ctx).
-		SetHeaders(spec.GenProxyHeader(defaultCodeIDEPort, s.ID)).
+	resp, err := s.ProxyRequest(ctx, defaultCodeIDEPort).
 		SetBody(map[string]any{
 			"lang":   lang,
 			"code":   code,
@@ -87,9 +82,7 @@ func (s *Sandbox) RunCodeV1(ctx context.Context, lang, code string,
 
 func (s *Sandbox) RunCode(ctx context.Context, lang, code string,
 	inputs map[string]any) (*RunCodeResponse, error) {
-	resp, err := s.ProxyClient().R().
-		SetContext(ctx).
-		SetHeaders(spec.GenProxyHeader(defaultCodeIDEPort, s.ID)).
+	resp, err := s.ProxyRequest(ctx, defaultCodeIDEPort).
 		SetBody(map[string]any{
 			"lang":   lang,
 			"code":   code,

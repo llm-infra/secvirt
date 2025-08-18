@@ -153,7 +153,7 @@ func (f *Filesystem) Mkdir(ctx context.Context, path string) (bool, error) {
 		conErr, ok := err.(*connect.Error)
 		if ok {
 			if conErr.Code() == connect.CodeAlreadyExists {
-				return false, nil
+				return true, nil
 			}
 		}
 		return false, err

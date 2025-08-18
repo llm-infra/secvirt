@@ -7,6 +7,8 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/llm-infra/secvirt/sdk-go/sandbox/commands"
 	"github.com/llm-infra/secvirt/sdk-go/sandbox/filesystem"
+	"github.com/llm-infra/secvirt/sdk-go/sandbox/spec"
+	"github.com/mel2oo/go-dkit/ext"
 )
 
 var (
@@ -82,8 +84,16 @@ func (c *Sandbox) _createSandbox(ctx context.Context, userID string,
 	return resp.Result().(*SandboxDetail), nil
 }
 
-func (c *Sandbox) ProxyClient() *resty.Client {
-	return c.proxy
+func (c *Sandbox) ProxyBaseURL() string {
+	return c.proxy.BaseURL
+}
+
+func (c *Sandbox) ProxyRequest(ctx context.Context, port int) *resty.Request {
+	req := c.proxy.R()
+	req.SetContext(ctx)
+	req.SetHeaders(spec.GenSandboxHeader(port, c.ID, c.User))
+	ext.InjectHeader(ctx, req.Header)
+	return req
 }
 
 func (c *Sandbox) Filesystem() *filesystem.Filesystem {
