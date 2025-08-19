@@ -10,6 +10,22 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestGetMcpConfig(t *testing.T) {
+	sbx, err := NewSandbox(
+		t.Context(),
+		sandbox.WithHost("192.168.134.142"),
+	)
+	assert.NoError(t, err)
+
+	res, err := sbx.GetMcpConfig(
+		t.Context(),
+		"790b558b-188e-2b28-9064-53a51c187a3b",
+	)
+	assert.NoError(t, err)
+
+	fmt.Println(res)
+}
+
 func TestMCPs(t *testing.T) {
 	sbx, err := NewSandbox(
 		context.TODO(),

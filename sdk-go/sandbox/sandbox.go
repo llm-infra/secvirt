@@ -112,6 +112,13 @@ func (c *Sandbox) ProxyRequest(ctx context.Context, port int) *resty.Request {
 	return req
 }
 
+func (c *Sandbox) ApiRequest(ctx context.Context) *resty.Request {
+	req := c.api.R()
+	req.SetContext(ctx)
+	ext.InjectHeader(ctx, req.Header)
+	return req
+}
+
 func (c *Sandbox) Filesystem() *filesystem.Filesystem {
 	return c.fs
 }
