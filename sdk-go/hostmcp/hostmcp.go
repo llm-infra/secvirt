@@ -76,7 +76,11 @@ func (s *Sandbox) MCPs(ctx context.Context) ([]MCPEndpoint, error) {
 	return *result, nil
 }
 
-func (s *Sandbox) Launch(ctx context.Context, cfg *ServersFile, reload bool) ([]MCPEndpoint, error) {
+func (s *Sandbox) Launch(
+	ctx context.Context,
+	cfg *ServersFile,
+	reload bool,
+) ([]MCPEndpoint, error) {
 	resp, err := s.ProxyRequest(ctx, defaultMcpServerPort).
 		SetBody(map[string]any{
 			"config": cfg,
@@ -100,8 +104,10 @@ func (s *Sandbox) Launch(ctx context.Context, cfg *ServersFile, reload bool) ([]
 	return *result, err
 }
 
-func (s *Sandbox) Connect(ctx context.Context, endpoint MCPEndpoint) (*client.Client, error) {
-	// 初始化MCP客户端
+func (s *Sandbox) Connect(
+	ctx context.Context,
+	endpoint MCPEndpoint,
+) (*client.Client, *mcp.InitializeRequest, error) {
 	client, err := client.NewStreamableHttpClient(
 		s.ProxyBaseURL()+endpoint.Path+"mcp",
 		transport.WithHTTPHeaders(
@@ -109,11 +115,11 @@ func (s *Sandbox) Connect(ctx context.Context, endpoint MCPEndpoint) (*client.Cl
 		),
 	)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if err := client.Start(ctx); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	initRequest := mcp.InitializeRequest{}
@@ -124,6 +130,6 @@ func (s *Sandbox) Connect(ctx context.Context, endpoint MCPEndpoint) (*client.Cl
 		Version: "v1.0.0",
 	}
 
-	_, err = client.Initialize(context.TODO(), initRequest)
-	return client, err
+	_, err = client.Initialize(ctx, initRequest)
+	return client, &initRequest, err
 }
