@@ -49,7 +49,7 @@ func NewSandbox(ctx context.Context, opts ...Option) (*Sandbox, error) {
 	prxClient := resty.New()
 	prxClient.SetBaseURL(prxBaseUrl)
 	if opt.useTelemetry {
-		otelresty.TraceClient(apiClient,
+		otelresty.TraceClient(prxClient,
 			otelresty.WithSpanNameFormatter(otel.RestySpanNameFormatter),
 			otelresty.WithTracerProvider(opt.tracerProvider),
 			otelresty.WithPropagators(opt.propagators),
