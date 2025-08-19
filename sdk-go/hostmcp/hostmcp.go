@@ -32,7 +32,7 @@ func NewSandbox(ctx context.Context, opts ...sandbox.Option) (*Sandbox, error) {
 	return &Sandbox{Sandbox: client}, nil
 }
 
-func (s *Sandbox) GetMcpConfig(ctx context.Context, id string) (*ServerEntry, error) {
+func (s *Sandbox) GetMcpConfig(ctx context.Context, id string) (map[string]ServerEntry, error) {
 	type PaginatedResponse struct {
 		Data map[string]ServerEntry `json:"clients"`
 	}
@@ -53,11 +53,11 @@ func (s *Sandbox) GetMcpConfig(ctx context.Context, id string) (*ServerEntry, er
 	}
 
 	result := resp.Result().(*PaginatedResponse)
-	for _, v := range result.Data {
-		return &v, nil
+	if len(result.Data) == 0 {
+		return nil, errors.New("mcp config not found")
 	}
 
-	return nil, errors.New("mcp config not found")
+	return result.Data, nil
 }
 
 func (s *Sandbox) MCPs(ctx context.Context) ([]MCPEndpoint, error) {
