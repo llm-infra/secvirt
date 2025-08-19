@@ -1,6 +1,11 @@
 package sandbox
 
-import "fmt"
+import (
+	"fmt"
+
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/trace"
+)
 
 type Option func(*Options)
 
@@ -10,6 +15,10 @@ type Options struct {
 	template    TemplateType
 	sandboxID   string
 	healthPorts []int
+
+	useTelemetry   bool
+	tracerProvider trace.TracerProvider
+	propagators    propagation.TextMapPropagator
 }
 
 func newOptions() *Options {
@@ -38,6 +47,16 @@ func WithSandboxID(id string) Option {
 
 func WithHealthPorts(ports []int) Option {
 	return func(o *Options) { o.healthPorts = ports }
+}
+
+func WithTelemetry(
+	tracerProvider trace.TracerProvider,
+	propagators propagation.TextMapPropagator) Option {
+	return func(o *Options) {
+		o.useTelemetry = true
+		o.tracerProvider = tracerProvider
+		o.propagators = propagators
+	}
 }
 
 type TemplateType string

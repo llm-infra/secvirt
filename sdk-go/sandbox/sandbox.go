@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/dubonzi/otelresty"
 	"github.com/go-resty/resty/v2"
 	"github.com/llm-infra/secvirt/sdk-go/sandbox/commands"
 	"github.com/llm-infra/secvirt/sdk-go/sandbox/filesystem"
 	"github.com/llm-infra/secvirt/sdk-go/sandbox/spec"
 	"github.com/mel2oo/go-dkit/ext"
+	"github.com/mel2oo/go-dkit/otel"
 )
 
 var (
@@ -35,10 +37,24 @@ func NewSandbox(ctx context.Context, opts ...Option) (*Sandbox, error) {
 	apiBaseUrl := fmt.Sprintf("http://%s:%d", opt.host, defaultAPIPort)
 	apiClient := resty.New()
 	apiClient.SetBaseURL(apiBaseUrl)
+	if opt.useTelemetry {
+		otelresty.TraceClient(apiClient,
+			otelresty.WithSpanNameFormatter(otel.RestySpanNameFormatter),
+			otelresty.WithTracerProvider(opt.tracerProvider),
+			otelresty.WithPropagators(opt.propagators),
+		)
+	}
 
 	prxBaseUrl := fmt.Sprintf("http://%s:%d", opt.host, defaultProxyPort)
 	prxClient := resty.New()
 	prxClient.SetBaseURL(prxBaseUrl)
+	if opt.useTelemetry {
+		otelresty.TraceClient(apiClient,
+			otelresty.WithSpanNameFormatter(otel.RestySpanNameFormatter),
+			otelresty.WithTracerProvider(opt.tracerProvider),
+			otelresty.WithPropagators(opt.propagators),
+		)
+	}
 
 	sbx := &Sandbox{
 		api:   apiClient,
