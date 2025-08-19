@@ -33,7 +33,7 @@ func TestMCPs(t *testing.T) {
 	)
 	assert.NoError(t, err)
 
-	res, err := sbx.MCPs(context.TODO())
+	res, err := sbx.GetLaunchMCPs(context.TODO())
 	assert.NoError(t, err)
 
 	fmt.Println(res)
@@ -56,7 +56,7 @@ func TestMCPLaunch(t *testing.T) {
 	}, false)
 	assert.NoError(t, err)
 
-	cli, err := sbx.Connect(t.Context(), mcps[0])
+	cli, _, err := sbx.Connect(t.Context(), mcps[0])
 	assert.NoError(t, err)
 
 	tools, err := cli.ListTools(context.Background(), mcp.ListToolsRequest{})

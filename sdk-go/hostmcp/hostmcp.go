@@ -60,7 +60,7 @@ func (s *Sandbox) GetMcpConfig(ctx context.Context, id string) (map[string]Serve
 	return result.Data, nil
 }
 
-func (s *Sandbox) MCPs(ctx context.Context) ([]MCPEndpoint, error) {
+func (s *Sandbox) GetLaunchMCPs(ctx context.Context) ([]MCPEndpoint, error) {
 	resp, err := s.ProxyRequest(ctx, defaultMcpServerPort).
 		SetResult([]MCPEndpoint{}).
 		SetError(sandbox.ErrorResponse{}).
@@ -76,10 +76,7 @@ func (s *Sandbox) MCPs(ctx context.Context) ([]MCPEndpoint, error) {
 	return *result, nil
 }
 
-func (s *Sandbox) Launch(
-	ctx context.Context,
-	cfg *ServersFile,
-	reload bool,
+func (s *Sandbox) Launch(ctx context.Context, cfg *ServersFile, reload bool,
 ) ([]MCPEndpoint, error) {
 	resp, err := s.ProxyRequest(ctx, defaultMcpServerPort).
 		SetBody(map[string]any{
@@ -104,9 +101,37 @@ func (s *Sandbox) Launch(
 	return *result, err
 }
 
-func (s *Sandbox) Connect(
-	ctx context.Context,
-	endpoint MCPEndpoint,
+func (s *Sandbox) LaunchWithID(ctx context.Context, id string, reload bool,
+) ([]MCPEndpoint, error) {
+	cfg, err := s.GetMcpConfig(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := s.ProxyRequest(ctx, defaultMcpServerPort).
+		SetBody(map[string]any{
+			"config": ServersFile{McpServers: cfg},
+			"reload": reload,
+		}).
+		SetResult([]MCPEndpoint{}).
+		SetError(sandbox.ErrorResponse{}).
+		Post("/hostmcp/v1/launch")
+	if err != nil {
+		return nil, err
+	}
+	if resp.IsError() {
+		return nil, resp.Error().(*sandbox.ErrorResponse)
+	}
+
+	result := resp.Result().(*[]MCPEndpoint)
+	if len(*result) == 0 {
+		return nil, errors.New("failed lanuch mcp server")
+	}
+
+	return *result, err
+}
+
+func (s *Sandbox) Connect(ctx context.Context, endpoint MCPEndpoint,
 ) (*client.Client, *mcp.InitializeResult, error) {
 	client, err := client.NewStreamableHttpClient(
 		s.ProxyBaseURL()+endpoint.Path+"mcp",
@@ -126,7 +151,7 @@ func (s *Sandbox) Connect(
 	initRequest.Params.ProtocolVersion = mcp.LATEST_PROTOCOL_VERSION
 	initRequest.Params.Capabilities = mcp.ClientCapabilities{}
 	initRequest.Params.ClientInfo = mcp.Implementation{
-		Name:    "sdk-test",
+		Name:    "sdk-go",
 		Version: "v1.0.0",
 	}
 
