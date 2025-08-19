@@ -76,7 +76,7 @@ func (s *Sandbox) MCPs(ctx context.Context) ([]MCPEndpoint, error) {
 	return *result, nil
 }
 
-func (s *Sandbox) Launch(ctx context.Context, cfg *ServersFile, reload bool) (*client.Client, error) {
+func (s *Sandbox) Launch(ctx context.Context, cfg *ServersFile, reload bool) ([]MCPEndpoint, error) {
 	resp, err := s.ProxyRequest(ctx, defaultMcpServerPort).
 		SetBody(map[string]any{
 			"config": cfg,
@@ -97,9 +97,13 @@ func (s *Sandbox) Launch(ctx context.Context, cfg *ServersFile, reload bool) (*c
 		return nil, errors.New("failed lanuch mcp server")
 	}
 
+	return *result, err
+}
+
+func (s *Sandbox) Connect(ctx context.Context, endpoint MCPEndpoint) (*client.Client, error) {
 	// 初始化MCP客户端
 	client, err := client.NewStreamableHttpClient(
-		s.ProxyBaseURL()+(*result)[0].Path+"mcp",
+		s.ProxyBaseURL()+endpoint.Path+"mcp",
 		transport.WithHTTPHeaders(
 			spec.GenSandboxHeader(defaultMcpRouterPort, s.ID, ""),
 		),

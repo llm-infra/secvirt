@@ -46,7 +46,7 @@ func TestMCPLaunch(t *testing.T) {
 	)
 	assert.NoError(t, err)
 
-	cli, err := sbx.Launch(context.TODO(), &ServersFile{
+	mcps, err := sbx.Launch(context.TODO(), &ServersFile{
 		McpServers: map[string]ServerEntry{
 			"duck-mcp": {
 				Type:    "stdio",
@@ -54,6 +54,9 @@ func TestMCPLaunch(t *testing.T) {
 			},
 		},
 	}, false)
+	assert.NoError(t, err)
+
+	cli, err := sbx.Connect(t.Context(), mcps[0])
 	assert.NoError(t, err)
 
 	tools, err := cli.ListTools(context.Background(), mcp.ListToolsRequest{})
