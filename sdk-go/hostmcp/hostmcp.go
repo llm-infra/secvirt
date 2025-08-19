@@ -107,7 +107,7 @@ func (s *Sandbox) Launch(
 func (s *Sandbox) Connect(
 	ctx context.Context,
 	endpoint MCPEndpoint,
-) (*client.Client, *mcp.InitializeRequest, error) {
+) (*client.Client, *mcp.InitializeResult, error) {
 	client, err := client.NewStreamableHttpClient(
 		s.ProxyBaseURL()+endpoint.Path+"mcp",
 		transport.WithHTTPHeaders(
@@ -130,6 +130,6 @@ func (s *Sandbox) Connect(
 		Version: "v1.0.0",
 	}
 
-	_, err = client.Initialize(ctx, initRequest)
-	return client, &initRequest, err
+	initResult, err := client.Initialize(ctx, initRequest)
+	return client, initResult, err
 }
