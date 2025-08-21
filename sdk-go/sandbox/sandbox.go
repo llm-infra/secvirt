@@ -80,7 +80,7 @@ func NewSandbox(ctx context.Context, opts ...Option) (*Sandbox, error) {
 
 func (c *Sandbox) _createSandbox(ctx context.Context, userID string,
 	template TemplateType, healthPorts []int) (*SandboxDetail, error) {
-	resp, err := c.api.R().
+	resp, err := c.ApiRequest(ctx).
 		SetContext(ctx).
 		SetBody(map[string]any{
 			"user_id":      userID,
@@ -132,7 +132,7 @@ func (c *Sandbox) Pty() *commands.Pty {
 }
 
 func (c *Sandbox) GetSandbox(ctx context.Context, sandboxID string) (*SandboxDetail, error) {
-	resp, err := c.api.R().
+	resp, err := c.ApiRequest(ctx).
 		SetContext(ctx).
 		SetResult(SandboxDetail{}).
 		SetError(ErrorResponse{}).
@@ -148,7 +148,7 @@ func (c *Sandbox) GetSandbox(ctx context.Context, sandboxID string) (*SandboxDet
 }
 
 func (c *Sandbox) StopSandbox(ctx context.Context, sandboxID string) error {
-	resp, err := c.api.R().
+	resp, err := c.ApiRequest(ctx).
 		SetContext(ctx).
 		SetError(ErrorResponse{}).
 		Post("/secvirt/v2/sandboxes/" + sandboxID + "/stop")
@@ -163,7 +163,7 @@ func (c *Sandbox) StopSandbox(ctx context.Context, sandboxID string) error {
 }
 
 func (c *Sandbox) StartSandbox(ctx context.Context, sandboxID string) error {
-	resp, err := c.api.R().
+	resp, err := c.ApiRequest(ctx).
 		SetContext(ctx).
 		SetError(ErrorResponse{}).
 		Post("/secvirt/v2/sandboxes/" + sandboxID + "/start")
@@ -178,7 +178,7 @@ func (c *Sandbox) StartSandbox(ctx context.Context, sandboxID string) error {
 }
 
 func (c *Sandbox) DestroySandbox(ctx context.Context, sandboxID string) error {
-	resp, err := c.api.R().
+	resp, err := c.ApiRequest(ctx).
 		SetContext(ctx).
 		SetError(ErrorResponse{}).
 		Post("/secvirt/v2/sandboxes/" + sandboxID + "/destroy")

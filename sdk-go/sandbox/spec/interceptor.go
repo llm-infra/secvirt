@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"connectrpc.com/connect"
+	"github.com/mel2oo/go-dkit/ext"
 )
 
 const DefaultProxyHostSuffix = ".proxy.com"
@@ -39,6 +40,7 @@ func (i *headerInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc 
 		for k, v := range headers {
 			req.Header().Set(k, v)
 		}
+		ext.InjectHeader(ctx, req.Header())
 		return next(ctx, req)
 	}
 }
@@ -52,6 +54,7 @@ func (i *headerInterceptor) WrapStreamingClient(next connect.StreamingClientFunc
 		for k, v := range headers {
 			conn.RequestHeader().Set(k, v)
 		}
+		ext.InjectHeader(ctx, conn.RequestHeader())
 		return conn
 	}
 }
