@@ -108,27 +108,7 @@ func (s *Sandbox) LaunchWithID(ctx context.Context, id string, reload bool,
 		return nil, err
 	}
 
-	resp, err := s.ProxyRequest(ctx, defaultMcpServerPort).
-		SetBody(map[string]any{
-			"config": ServersFile{McpServers: cfg},
-			"reload": reload,
-		}).
-		SetResult([]MCPEndpoint{}).
-		SetError(sandbox.ErrorResponse{}).
-		Post("/hostmcp/v1/launch")
-	if err != nil {
-		return nil, err
-	}
-	if resp.IsError() {
-		return nil, resp.Error().(*sandbox.ErrorResponse)
-	}
-
-	result := resp.Result().(*[]MCPEndpoint)
-	if len(*result) == 0 {
-		return nil, errors.New("failed lanuch mcp server")
-	}
-
-	return *result, err
+	return s.Launch(ctx, &ServersFile{McpServers: cfg}, false)
 }
 
 func (s *Sandbox) Connect(ctx context.Context, endpoint MCPEndpoint,

@@ -7,6 +7,11 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+var (
+	defaultAPIPort   = 8994
+	defaultProxyPort = 8993
+)
+
 type Option func(*Options)
 
 type Options struct {
@@ -14,6 +19,8 @@ type Options struct {
 	user        string
 	template    TemplateType
 	sandboxID   string
+	apiPort     int
+	proxyPort   int
 	healthPorts []int
 
 	useTelemetry   bool
@@ -23,9 +30,11 @@ type Options struct {
 
 func newOptions() *Options {
 	return &Options{
-		host:     "localhost",
-		user:     "default",
-		template: "codeide:latest",
+		host:      "localhost",
+		user:      "default",
+		template:  "codeide:latest",
+		apiPort:   defaultAPIPort,
+		proxyPort: defaultProxyPort,
 	}
 }
 
@@ -45,12 +54,19 @@ func WithSandboxID(id string) Option {
 	return func(o *Options) { o.sandboxID = id }
 }
 
+func WithAPIPort(port int) Option {
+	return func(o *Options) { o.apiPort = port }
+}
+
+func WithProxyPort(port int) Option {
+	return func(o *Options) { o.proxyPort = port }
+}
+
 func WithHealthPorts(ports []int) Option {
 	return func(o *Options) { o.healthPorts = ports }
 }
 
-func WithTelemetry(
-	tracerProvider trace.TracerProvider,
+func WithTelemetry(tracerProvider trace.TracerProvider,
 	propagators propagation.TextMapPropagator) Option {
 	return func(o *Options) {
 		o.useTelemetry = true

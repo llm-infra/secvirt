@@ -13,11 +13,6 @@ import (
 	"github.com/mel2oo/go-dkit/otel"
 )
 
-var (
-	defaultAPIPort   = 8994
-	defaultProxyPort = 8993
-)
-
 type Sandbox struct {
 	*SandboxDetail
 
@@ -34,7 +29,7 @@ func NewSandbox(ctx context.Context, opts ...Option) (*Sandbox, error) {
 		o(opt)
 	}
 
-	apiBaseUrl := fmt.Sprintf("http://%s:%d", opt.host, defaultAPIPort)
+	apiBaseUrl := fmt.Sprintf("http://%s:%d", opt.host, opt.apiPort)
 	apiClient := resty.New()
 	apiClient.SetBaseURL(apiBaseUrl)
 	if opt.useTelemetry {
@@ -45,7 +40,7 @@ func NewSandbox(ctx context.Context, opts ...Option) (*Sandbox, error) {
 		)
 	}
 
-	prxBaseUrl := fmt.Sprintf("http://%s:%d", opt.host, defaultProxyPort)
+	prxBaseUrl := fmt.Sprintf("http://%s:%d", opt.host, opt.proxyPort)
 	prxClient := resty.New()
 	prxClient.SetBaseURL(prxBaseUrl)
 	if opt.useTelemetry {

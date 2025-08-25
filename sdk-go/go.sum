@@ -38,10 +38,8 @@ github.com/mailru/easyjson v0.7.7 h1:UGYAvKxe3sBsEDzO8ZeWOSlIQfWFlxbzLZe7hwFURr0
 github.com/mailru/easyjson v0.7.7/go.mod h1:xzfreul335JAWq5oZzymOObrkdz5UnU4kGfJJLY9Nlc=
 github.com/mark3labs/mcp-go v0.36.0 h1:rIZaijrRYPeSbJG8/qNDe0hWlGrCJ7FWHNMz2SQpTis=
 github.com/mark3labs/mcp-go v0.36.0/go.mod h1:T7tUa2jO6MavG+3P25Oy/jR7iCeJPHImCZHRymCn39g=
-github.com/mel2oo/go-dkit v0.0.0-20250819030852-c4236506635f h1:UhbjdzFmM6+jVI+ahH0BhCEVNss4Sh0HdNhUQGg3jyQ=
-github.com/mel2oo/go-dkit v0.0.0-20250819030852-c4236506635f/go.mod h1:5avr2Gqg7IXu9t2E/Umcc7mNu7qrSfgZtimTKho2qw8=
-github.com/mel2oo/go-dkit v0.0.0-20250819031538-4f5e03fe52b0 h1:18ktDVa/68rbeLIIsFqE7M9FH4IwoYk/H126JpuVs+0=
-github.com/mel2oo/go-dkit v0.0.0-20250819031538-4f5e03fe52b0/go.mod h1:ca+4J/hbmrvI/RaexO+ch+vhCmtwQAxko9SH5QpqbWo=
+github.com/mel2oo/go-dkit v0.0.0-20250821064527-bfc91c166c50 h1:7HjA494MV/xWv1gPsrlSSqelXG39jU/LkiNctfQ8PBU=
+github.com/mel2oo/go-dkit v0.0.0-20250821064527-bfc91c166c50/go.mod h1:ca+4J/hbmrvI/RaexO+ch+vhCmtwQAxko9SH5QpqbWo=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/rogpeppe/go-internal v1.13.1 h1:KvO1DLK/DRN07sQ1LQKScxyZJuNnedQ5/wKSR38lUII=
