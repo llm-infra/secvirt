@@ -63,19 +63,19 @@ func (s *Sandbox) RunCodeV1(ctx context.Context, lang, code string,
 
 	res := resp.Result().(*RunCodeResponse)
 	if res.Result == nil && res.Errors != nil {
-		return nil, errors.New(json.MarshalPureJsonString(res.Errors))
+		return nil, errors.New(json.MarshalPureString(res.Errors))
 	}
 
 	output, ok := res.Result.(string)
 	if ok {
 		return &RunCodeResponseV1{
 			Output:  output,
-			Console: json.MarshalPureJsonString(res.Stdouts),
+			Console: json.MarshalPureString(res.Stdouts),
 		}, nil
 	} else {
 		return &RunCodeResponseV1{
-			Output:  json.MarshalPureJsonString(res.Result),
-			Console: json.MarshalPureJsonString(res.Stdouts),
+			Output:  json.MarshalPureString(res.Result),
+			Console: json.MarshalPureString(res.Stdouts),
 		}, nil
 	}
 }
