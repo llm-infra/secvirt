@@ -66,9 +66,9 @@ func NewSandbox(ctx context.Context, opts ...Option) (*Sandbox, error) {
 		return nil, err
 	}
 
-	sbx.fs = filesystem.NewFileSystem(prxBaseUrl, res.ID, opt.user)
-	sbx.cmd = commands.NewCmd(prxBaseUrl, res.ID, opt.user)
-	sbx.pty = commands.NewPty(prxBaseUrl, res.ID, opt.user)
+	sbx.fs = filesystem.NewFileSystem(prxBaseUrl, res.Name, opt.user)
+	sbx.cmd = commands.NewCmd(prxBaseUrl, res.Name, opt.user)
+	sbx.pty = commands.NewPty(prxBaseUrl, res.Name, opt.user)
 	sbx.SandboxDetail = res
 	return sbx, nil
 }
@@ -102,7 +102,7 @@ func (c *Sandbox) ProxyBaseURL() string {
 func (c *Sandbox) ProxyRequest(ctx context.Context, port int) *resty.Request {
 	req := c.proxy.R()
 	req.SetContext(ctx)
-	req.SetHeaders(spec.GenSandboxHeader(port, c.ID, c.User))
+	req.SetHeaders(spec.GenSandboxHeader(port, c.Name, c.User))
 	ext.InjectHeader(ctx, req.Header)
 	return req
 }

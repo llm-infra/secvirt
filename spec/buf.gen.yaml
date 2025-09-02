@@ -6,9 +6,6 @@ plugins:
   - plugin: connect-go
     out: ../envd/internal/service/spec
     opt: paths=source_relative
-  - plugin: go-mcp
-    out: ../envd/internal/service/spec
-    opt: paths=source_relative
 
 managed:
   enabled: true

@@ -116,7 +116,7 @@ func (s *Sandbox) Connect(ctx context.Context, endpoint MCPEndpoint,
 	client, err := client.NewStreamableHttpClient(
 		s.ProxyBaseURL()+endpoint.Path+"mcp",
 		transport.WithHTTPHeaders(
-			spec.GenSandboxHeader(defaultMcpRouterPort, s.ID, ""),
+			spec.GenSandboxHeader(defaultMcpRouterPort, s.Name, ""),
 		),
 	)
 	if err != nil {

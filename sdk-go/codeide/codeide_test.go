@@ -3,7 +3,10 @@ package codeide
 import (
 	"context"
 	"fmt"
+	"strings"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/llm-infra/secvirt/sdk-go/sandbox"
 	"github.com/stretchr/testify/assert"
@@ -16,24 +19,41 @@ func TestPackages(t *testing.T) {
 	)
 	assert.NoError(t, err)
 
-	res, err := sbx.Packages(context.Background(), "python")
-	assert.NoError(t, err)
+	for range 100 {
+		time.Sleep(time.Second)
 
-	fmt.Println(res)
-
-	b, err := sbx.Filesystem().Mkdir(t.Context(), "testpath")
-	assert.Equal(t, b, true)
-	assert.NoError(t, err)
+		_, err = sbx.Packages(context.Background(), "python")
+		if assert.NoError(t, err) {
+			fmt.Println("success")
+		} else {
+			fmt.Println("error", err)
+		}
+	}
 }
 
 func TestRunCode(t *testing.T) {
-	sbx, err := NewSandbox(
-		context.TODO(),
-		sandbox.WithHost("10.20.152.105"),
-	)
-	assert.NoError(t, err)
+	wg := sync.WaitGroup{}
+	for range 10 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
 
-	res, err := sbx.RunCode(context.TODO(), "python", `import os
+			for {
+				sbx, err := NewSandbox(
+					context.TODO(),
+					sandbox.WithHost("192.168.134.142"),
+				)
+				if !assert.NoError(t, err) {
+					if strings.Contains(err.Error(), "container waitting") {
+						fmt.Println("waitting:", err)
+						time.Sleep(time.Second)
+					} else {
+						fmt.Println("create fail:", err)
+					}
+					continue
+				}
+
+				_, err = sbx.RunCode(context.TODO(), "python", `import os
 
 # 打印当前工作路径
 cwd = os.getcwd()
@@ -45,7 +65,13 @@ with open(file_path, "w", encoding="utf-8") as f:
     f.write("这是一个测试文件\n")
 
 print(f"文件已创建: {file_path}")`, nil)
-	assert.NoError(t, err)
-
-	fmt.Println(res)
+				if assert.NoError(t, err) {
+					fmt.Println("success")
+				} else {
+					fmt.Println("error:", err)
+				}
+			}
+		}()
+	}
+	wg.Wait()
 }

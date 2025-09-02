@@ -42,6 +42,10 @@ github.com/mel2oo/go-dkit v0.0.0-20250821064527-bfc91c166c50 h1:7HjA494MV/xWv1gP
 github.com/mel2oo/go-dkit v0.0.0-20250821064527-bfc91c166c50/go.mod h1:ca+4J/hbmrvI/RaexO+ch+vhCmtwQAxko9SH5QpqbWo=
 github.com/mel2oo/go-dkit v0.0.0-20250825062159-d8200377ec26 h1:Xxgk4+VXkWiPW3sWMXUxAEqqIfE+K8aW8zxvx+89An4=
 github.com/mel2oo/go-dkit v0.0.0-20250825062159-d8200377ec26/go.mod h1:ca+4J/hbmrvI/RaexO+ch+vhCmtwQAxko9SH5QpqbWo=
+github.com/mel2oo/go-dkit v0.0.0-20250901023948-07b204736644 h1:LfQEMFTeuklEgOpb89kO0yRh3QJTB21Hx1zj0LOfwTE=
+github.com/mel2oo/go-dkit v0.0.0-20250901023948-07b204736644/go.mod h1:ca+4J/hbmrvI/RaexO+ch+vhCmtwQAxko9SH5QpqbWo=
+github.com/mel2oo/go-dkit v0.0.0-20250901062719-0ce42300c55a h1:BMMwOY+5vOGucHt2VC+fAqbU8eYQUbyLbWKL7v9fQFY=
+github.com/mel2oo/go-dkit v0.0.0-20250901062719-0ce42300c55a/go.mod h1:ca+4J/hbmrvI/RaexO+ch+vhCmtwQAxko9SH5QpqbWo=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/rogpeppe/go-internal v1.13.1 h1:KvO1DLK/DRN07sQ1LQKScxyZJuNnedQ5/wKSR38lUII=

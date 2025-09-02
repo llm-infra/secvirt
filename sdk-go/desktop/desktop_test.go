@@ -16,5 +16,5 @@ func TestSandboxRun(t *testing.T) {
 	)
 	assert.NoError(t, err)
 
-	fmt.Println(sbx.ID)
+	fmt.Println(sbx.Name)
 }
