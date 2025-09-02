@@ -3,6 +3,7 @@ package sandbox
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/dubonzi/otelresty"
 	"github.com/go-resty/resty/v2"
@@ -31,6 +32,15 @@ func NewSandbox(ctx context.Context, opts ...Option) (*Sandbox, error) {
 
 	apiBaseUrl := fmt.Sprintf("http://%s:%d", opt.host, opt.apiPort)
 	apiClient := resty.New()
+	apiClient.SetRetryCount(6)
+	apiClient.SetRetryWaitTime(time.Millisecond * 500)
+	apiClient.SetRetryMaxWaitTime(time.Second * 3)
+	apiClient.AddRetryCondition(func(r *resty.Response, err error) bool {
+		if err != nil {
+			return true
+		}
+		return r.StatusCode() >= 500 || r.StatusCode() == 429
+	})
 	apiClient.SetBaseURL(apiBaseUrl)
 	if opt.useTelemetry {
 		otelresty.TraceClient(apiClient,
@@ -42,6 +52,15 @@ func NewSandbox(ctx context.Context, opts ...Option) (*Sandbox, error) {
 
 	prxBaseUrl := fmt.Sprintf("http://%s:%d", opt.host, opt.proxyPort)
 	prxClient := resty.New()
+	prxClient.SetRetryCount(6)
+	prxClient.SetRetryWaitTime(time.Millisecond * 500)
+	prxClient.SetRetryMaxWaitTime(time.Second * 3)
+	prxClient.AddRetryCondition(func(r *resty.Response, err error) bool {
+		if err != nil {
+			return true
+		}
+		return r.StatusCode() >= 500 || r.StatusCode() == 429
+	})
 	prxClient.SetBaseURL(prxBaseUrl)
 	if opt.useTelemetry {
 		otelresty.TraceClient(prxClient,

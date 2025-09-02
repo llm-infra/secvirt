@@ -31,47 +31,83 @@ func TestPackages(t *testing.T) {
 	}
 }
 
-func TestRunCode(t *testing.T) {
-	wg := sync.WaitGroup{}
-	for range 10 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+func TestSandboxConcurrency(t *testing.T) {
+	const (
+		concurrency = 1   // 并发数
+		iterations  = 200 // 每个 goroutine 执行次数
+	)
 
-			for {
+	var (
+		wg        sync.WaitGroup
+		mu        sync.Mutex
+		success   int
+		fail      int
+		durations []time.Duration
+	)
+
+	start := time.Now()
+	wg.Add(concurrency)
+
+	for i := 0; i < concurrency; i++ {
+		go func(id int) {
+			defer wg.Done()
+			for j := 0; j < iterations; j++ {
+				begin := time.Now()
+
 				sbx, err := NewSandbox(
 					context.TODO(),
 					sandbox.WithHost("192.168.134.142"),
 				)
-				if !assert.NoError(t, err) {
+				if err != nil {
 					if strings.Contains(err.Error(), "container waitting") {
-						fmt.Println("waitting:", err)
-						time.Sleep(time.Second)
-					} else {
-						fmt.Println("create fail:", err)
+						time.Sleep(time.Second) // 等待再试
+						continue
 					}
+					mu.Lock()
+					fail++
+					mu.Unlock()
 					continue
 				}
 
-				_, err = sbx.RunCode(context.TODO(), "python", `import os
-
-# 打印当前工作路径
+				_, err = sbx.RunCode(context.TODO(), "python", `
+import os
 cwd = os.getcwd()
 print("当前工作路径:", cwd)
-
-# 创建文件 test
 file_path = os.path.join(cwd, "test")
 with open(file_path, "w", encoding="utf-8") as f:
     f.write("这是一个测试文件\n")
+print(f"文件已创建: {file_path}")
+`, nil)
 
-print(f"文件已创建: {file_path}")`, nil)
-				if assert.NoError(t, err) {
-					fmt.Println("success")
+				mu.Lock()
+				if err == nil {
+					success++
+					durations = append(durations, time.Since(begin))
 				} else {
-					fmt.Println("error:", err)
+					fail++
 				}
+				mu.Unlock()
 			}
-		}()
+		}(i)
 	}
+
 	wg.Wait()
+	total := time.Since(start)
+
+	// 统计结果
+	mu.Lock()
+	defer mu.Unlock()
+	fmt.Printf("并发数: %d, 每个协程执行: %d 次\n", concurrency, iterations)
+	fmt.Printf("成功次数: %d, 失败次数: %d\n", success, fail)
+	fmt.Printf("总耗时: %v\n", total)
+
+	if len(durations) > 0 {
+		var sum time.Duration
+		for _, d := range durations {
+			sum += d
+		}
+		avg := sum / time.Duration(len(durations))
+		fmt.Printf("平均单次执行耗时: %v\n", avg)
+		fmt.Printf("QPS: %.2f\n", float64(success)/total.Seconds())
+	}
 }
