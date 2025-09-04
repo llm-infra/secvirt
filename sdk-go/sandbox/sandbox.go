@@ -3,6 +3,7 @@ package sandbox
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/dubonzi/otelresty"
@@ -39,7 +40,9 @@ func NewSandbox(ctx context.Context, opts ...Option) (*Sandbox, error) {
 		if err != nil {
 			return true
 		}
-		return r.StatusCode() >= 500 || r.StatusCode() == 429
+
+		return (r.StatusCode() >= 500 || r.StatusCode() == 429) &&
+			strings.Contains(string(r.Body()), "try again later")
 	})
 	apiClient.SetBaseURL(apiBaseUrl)
 	if opt.useTelemetry {
@@ -59,7 +62,9 @@ func NewSandbox(ctx context.Context, opts ...Option) (*Sandbox, error) {
 		if err != nil {
 			return true
 		}
-		return r.StatusCode() >= 500 || r.StatusCode() == 429
+
+		return (r.StatusCode() >= 500 || r.StatusCode() == 429) &&
+			strings.Contains(string(r.Body()), "try again later")
 	})
 	prxClient.SetBaseURL(prxBaseUrl)
 	if opt.useTelemetry {

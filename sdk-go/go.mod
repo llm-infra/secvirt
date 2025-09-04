@@ -7,7 +7,7 @@ require (
 	github.com/dubonzi/otelresty v1.6.0
 	github.com/go-resty/resty/v2 v2.16.5
 	github.com/mark3labs/mcp-go v0.36.0
-	github.com/mel2oo/go-dkit v0.0.0-20250901062719-0ce42300c55a
+	github.com/mel2oo/go-dkit v0.0.0-20250904050043-3b97a36d8335
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/otel v1.37.0
 	go.opentelemetry.io/otel/trace v1.37.0

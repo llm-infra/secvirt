@@ -15,7 +15,7 @@ import (
 func TestPackages(t *testing.T) {
 	sbx, err := NewSandbox(
 		context.TODO(),
-		sandbox.WithHost("192.168.134.142"),
+		sandbox.WithHost("10.50.10.18"),
 	)
 	assert.NoError(t, err)
 
@@ -56,7 +56,7 @@ func TestSandboxConcurrency(t *testing.T) {
 
 				sbx, err := NewSandbox(
 					context.TODO(),
-					sandbox.WithHost("192.168.134.142"),
+					sandbox.WithHost("10.50.10.18"),
 				)
 				if err != nil {
 					if strings.Contains(err.Error(), "container waitting") {
