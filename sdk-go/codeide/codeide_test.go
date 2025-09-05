@@ -57,6 +57,7 @@ func TestSandboxConcurrency(t *testing.T) {
 				sbx, err := NewSandbox(
 					context.TODO(),
 					sandbox.WithHost("10.50.10.18"),
+					sandbox.WithUser("1944590626499694594"),
 				)
 				if err != nil {
 					if strings.Contains(err.Error(), "container waitting") {

@@ -3,12 +3,15 @@ package hostmcp
 import (
 	"context"
 	"errors"
+	"net/http"
 
 	"github.com/llm-infra/secvirt/sdk-go/sandbox"
 	"github.com/llm-infra/secvirt/sdk-go/sandbox/spec"
 	"github.com/mark3labs/mcp-go/client"
 	"github.com/mark3labs/mcp-go/client/transport"
 	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/mel2oo/go-dkit/otel"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var (
@@ -113,8 +116,15 @@ func (s *Sandbox) LaunchWithID(ctx context.Context, id string, reload bool,
 
 func (s *Sandbox) Connect(ctx context.Context, endpoint MCPEndpoint,
 ) (*client.Client, *mcp.InitializeResult, error) {
+	tr := otelhttp.NewTransport(http.DefaultTransport,
+		otelhttp.WithTracerProvider(otel.Standard().TracerProvider),
+		otelhttp.WithPropagators(otel.Standard().Propagators),
+	)
+	httpClient := &http.Client{Transport: tr}
+
 	client, err := client.NewStreamableHttpClient(
 		s.ProxyBaseURL()+endpoint.Path+"mcp",
+		transport.WithHTTPBasicClient(httpClient),
 		transport.WithHTTPHeaders(
 			spec.GenSandboxHeader(defaultMcpRouterPort, s.Name, ""),
 		),
