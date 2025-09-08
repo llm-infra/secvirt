@@ -69,7 +69,6 @@ const (
 )
 
 type SandboxDetail struct {
-	ID          string   `json:"id"`
 	Name        string   `json:"name"`
 	IP          string   `json:"ip"`
 	User        string   `json:"user"`
