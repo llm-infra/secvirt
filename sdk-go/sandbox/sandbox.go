@@ -45,13 +45,11 @@ func NewSandbox(ctx context.Context, opts ...Option) (*Sandbox, error) {
 			strings.Contains(string(r.Body()), "try again later")
 	})
 	apiClient.SetBaseURL(apiBaseUrl)
-	if opt.useTelemetry {
-		otelresty.TraceClient(apiClient,
-			otelresty.WithSpanNameFormatter(otel.RestySpanNameFormatter),
-			otelresty.WithTracerProvider(opt.tracerProvider),
-			otelresty.WithPropagators(opt.propagators),
-		)
-	}
+	otelresty.TraceClient(apiClient,
+		otelresty.WithSpanNameFormatter(otel.RestySpanNameFormatter),
+		otelresty.WithTracerProvider(otel.Standard().TracerProvider),
+		otelresty.WithPropagators(otel.Standard().Propagators),
+	)
 
 	prxBaseUrl := fmt.Sprintf("http://%s:%d", opt.host, opt.proxyPort)
 	prxClient := resty.New()
@@ -67,13 +65,11 @@ func NewSandbox(ctx context.Context, opts ...Option) (*Sandbox, error) {
 			strings.Contains(string(r.Body()), "try again later")
 	})
 	prxClient.SetBaseURL(prxBaseUrl)
-	if opt.useTelemetry {
-		otelresty.TraceClient(prxClient,
-			otelresty.WithSpanNameFormatter(otel.RestySpanNameFormatter),
-			otelresty.WithTracerProvider(opt.tracerProvider),
-			otelresty.WithPropagators(opt.propagators),
-		)
-	}
+	otelresty.TraceClient(prxClient,
+		otelresty.WithSpanNameFormatter(otel.RestySpanNameFormatter),
+		otelresty.WithTracerProvider(otel.Standard().TracerProvider),
+		otelresty.WithPropagators(otel.Standard().Propagators),
+	)
 
 	sbx := &Sandbox{
 		api:   apiClient,

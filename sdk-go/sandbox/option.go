@@ -3,9 +3,6 @@ package sandbox
 import (
 	"fmt"
 	"sync/atomic"
-
-	"go.opentelemetry.io/otel/propagation"
-	"go.opentelemetry.io/otel/trace"
 )
 
 var (
@@ -23,10 +20,6 @@ type Options struct {
 	apiPort     int
 	proxyPort   int
 	healthPorts []int
-
-	useTelemetry   bool
-	tracerProvider trace.TracerProvider
-	propagators    propagation.TextMapPropagator
 }
 
 func newOptions() *Options {
@@ -65,15 +58,6 @@ func WithProxyPort(port int) Option {
 
 func WithHealthPorts(ports []int) Option {
 	return func(o *Options) { o.healthPorts = ports }
-}
-
-func WithTelemetry(tracerProvider trace.TracerProvider,
-	propagators propagation.TextMapPropagator) Option {
-	return func(o *Options) {
-		o.useTelemetry = true
-		o.tracerProvider = tracerProvider
-		o.propagators = propagators
-	}
 }
 
 type TemplateType string
