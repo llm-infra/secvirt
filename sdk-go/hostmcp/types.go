@@ -24,7 +24,7 @@ type ServerEntry struct {
 	Args    []string          `json:"args,omitempty"`
 	ENV     map[string]string `json:"env,omitempty"`
 
-	// HTTP
+	// SSE/HTTP
 	URL     string            `json:"url,omitempty"`
 	Headers map[string]string `json:"headers,omitempty"`
 	Timeout time.Duration     `json:"timeout,omitempty"`
