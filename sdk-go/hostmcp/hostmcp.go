@@ -119,6 +119,7 @@ func (s *Sandbox) Connect(ctx context.Context, endpoint MCPEndpoint,
 	tr := otelhttp.NewTransport(http.DefaultTransport,
 		otelhttp.WithTracerProvider(otel.Standard().TracerProvider),
 		otelhttp.WithPropagators(otel.Standard().Propagators),
+		otelhttp.WithSpanNameFormatter(otel.HttpSpanNameFormatter),
 	)
 	httpClient := &http.Client{Transport: tr}
 

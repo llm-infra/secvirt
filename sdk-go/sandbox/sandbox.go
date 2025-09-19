@@ -3,7 +3,6 @@ package sandbox
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/dubonzi/otelresty"
@@ -41,8 +40,7 @@ func NewSandbox(ctx context.Context, opts ...Option) (*Sandbox, error) {
 			return true
 		}
 
-		return (r.StatusCode() >= 500 || r.StatusCode() == 429) &&
-			strings.Contains(string(r.Body()), "try again later")
+		return r.StatusCode() >= 500 || r.StatusCode() == 429
 	})
 	apiClient.SetBaseURL(apiBaseUrl)
 	otelresty.TraceClient(apiClient,
@@ -61,8 +59,7 @@ func NewSandbox(ctx context.Context, opts ...Option) (*Sandbox, error) {
 			return true
 		}
 
-		return (r.StatusCode() >= 500 || r.StatusCode() == 429) &&
-			strings.Contains(string(r.Body()), "try again later")
+		return r.StatusCode() >= 500 || r.StatusCode() == 429
 	})
 	prxClient.SetBaseURL(prxBaseUrl)
 	otelresty.TraceClient(prxClient,

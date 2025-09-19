@@ -9,20 +9,32 @@ import (
 	"time"
 
 	"github.com/llm-infra/secvirt/sdk-go/sandbox"
+	"github.com/mel2oo/go-dkit/otel"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestPackages(t *testing.T) {
+	otel.NewProvider(t.Context(),
+		otel.WithServiceName("test"),
+		otel.WithServiceVersion("v0.1.0"),
+		otel.WithEndponit("10.50.10.18:4317"),
+		otel.SetStandard(),
+	)
+
+	tracer := otel.Standard().TracerProvider.Tracer("123")
+	ctx, span := tracer.Start(t.Context(), "aaa")
+	defer span.End()
+
 	sbx, err := NewSandbox(
-		context.TODO(),
-		sandbox.WithHost("10.50.10.18"),
+		ctx,
+		sandbox.WithHost("192.168.134.142"),
 	)
 	assert.NoError(t, err)
 
 	for range 100 {
 		time.Sleep(time.Second)
 
-		_, err = sbx.Packages(context.Background(), "python")
+		_, err = sbx.Packages(ctx, "python")
 		if assert.NoError(t, err) {
 			fmt.Println("success")
 		} else {
@@ -33,8 +45,8 @@ func TestPackages(t *testing.T) {
 
 func TestSandboxConcurrency(t *testing.T) {
 	const (
-		concurrency = 1   // 并发数
-		iterations  = 200 // 每个 goroutine 执行次数
+		concurrency = 10  // 并发数
+		iterations  = 100 // 每个 goroutine 执行次数
 	)
 
 	var (
@@ -56,7 +68,7 @@ func TestSandboxConcurrency(t *testing.T) {
 
 				sbx, err := NewSandbox(
 					context.TODO(),
-					sandbox.WithHost("10.50.10.18"),
+					sandbox.WithHost("192.168.134.142"),
 				)
 				if err != nil {
 					if strings.Contains(err.Error(), "container waitting") {
@@ -84,6 +96,7 @@ print(f"文件已创建: {file_path}")
 					success++
 					durations = append(durations, time.Since(begin))
 				} else {
+					fmt.Println("run code error", err)
 					fail++
 				}
 				mu.Unlock()
