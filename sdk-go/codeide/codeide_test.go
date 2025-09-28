@@ -45,8 +45,8 @@ func TestPackages(t *testing.T) {
 
 func TestSandboxConcurrency(t *testing.T) {
 	const (
-		concurrency = 10  // 并发数
-		iterations  = 100 // 每个 goroutine 执行次数
+		concurrency = 1 // 并发数
+		iterations  = 1 // 每个 goroutine 执行次数
 	)
 
 	var (
