@@ -3,7 +3,7 @@ package hostmcp
 import (
 	"time"
 
-	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
 const (
@@ -34,5 +34,5 @@ type MCPEndpoint struct {
 	Name  string      `json:"name,omitempty"`
 	Path  string      `json:"path,omitempty"`
 	Entry ServerEntry `json:"entry,omitempty"`
-	Tools []mcp.Tool  `json:"tools"`
+	Tools []*mcp.Tool `json:"tools"`
 }
