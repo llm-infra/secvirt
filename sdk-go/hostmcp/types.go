@@ -36,3 +36,9 @@ type MCPEndpoint struct {
 	Entry ServerEntry `json:"entry,omitempty"`
 	Tools []*mcp.Tool `json:"tools"`
 }
+
+type Preload struct {
+	Command string            `json:"command,omitempty"`
+	Args    []string          `json:"args,omitempty"`
+	Env     map[string]string `json:"env,omitempty"`
+}

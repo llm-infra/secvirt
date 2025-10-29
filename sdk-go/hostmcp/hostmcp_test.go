@@ -46,7 +46,7 @@ func TestMCPLaunch(t *testing.T) {
 	)
 	assert.NoError(t, err)
 
-	mcps, err := sbx.Launch(context.TODO(), &ServersFile{
+	mcps, err := sbx.Launch(context.TODO(), nil, &ServersFile{
 		McpServers: map[string]ServerEntry{
 			"duck-mcp": {
 				Type: EntryTypeStreamableHTTP,
@@ -68,4 +68,21 @@ func TestMCPLaunch(t *testing.T) {
 			fmt.Println("tool:", v.Name)
 		}
 	}
+}
+
+func TestDasMCP(t *testing.T) {
+	sbx, err := NewSandbox(
+		context.TODO(),
+		sandbox.WithHost("192.168.134.142"),
+	)
+	assert.NoError(t, err)
+
+	// 安装包
+	err = sbx.PluginInstall(t.Context(), "mcp-server-ngfw-V1.0.1-linux-x86-20251028065514.dmcp")
+	assert.NoError(t, err)
+
+	// 启动MCP
+	res, err := sbx.Launch(t.Context(), []Preload{}, &ServersFile{}, false)
+	assert.NoError(t, err)
+	fmt.Println(res)
 }

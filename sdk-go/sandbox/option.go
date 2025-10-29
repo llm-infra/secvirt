@@ -2,7 +2,6 @@ package sandbox
 
 import (
 	"fmt"
-	"sync/atomic"
 )
 
 var (
@@ -69,21 +68,19 @@ const (
 )
 
 type SandboxDetail struct {
-	Name        string   `json:"name"`
-	IP          string   `json:"ip"`
-	User        string   `json:"user"`
-	CreateAt    string   `json:"create_at"`
-	CpuLimit    int64    `json:"cpu_limit"`
-	MemLimit    uint64   `json:"mem_limit"`
-	Envs        []string `json:"envs"`
-	Binds       []string `json:"binds"`
-	Timeout     int64    `json:"timeout"`
-	HealthPorts []int    `json:"health_ports"`
-	State       string   `json:"state"`
-
-	RunnerState     string       `json:"runner_state"`
-	LastActionTime  int64        `json:"last_action_time"`
-	CurrActionCount atomic.Int64 `json:"curr_action_count"`
+	ID             string   `json:"id"`
+	Name           string   `json:"name"`
+	IP             string   `json:"ip"`
+	User           string   `json:"user"`
+	CreateAt       string   `json:"create_at"`
+	CpuLimit       int64    `json:"cpu_limit"`
+	MemLimit       uint64   `json:"mem_limit"`
+	Envs           []string `json:"envs"`
+	Binds          []string `json:"binds"`
+	Timeout        int64    `json:"timeout"`
+	HealthPorts    []int    `json:"health_ports"`
+	State          string   `json:"state"`
+	LastActionTime int64    `json:"last_action_time"`
 }
 
 type ErrorResponse struct {

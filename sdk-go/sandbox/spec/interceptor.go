@@ -3,6 +3,7 @@ package spec
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"connectrpc.com/connect"
 	"github.com/mel2oo/go-dkit/ext"
@@ -61,4 +62,25 @@ func (i *headerInterceptor) WrapStreamingClient(next connect.StreamingClientFunc
 
 func (i *headerInterceptor) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.StreamingHandlerFunc {
 	return next
+}
+
+type headerRoundTripper struct {
+	headers map[string]string
+	rt      http.RoundTripper
+}
+
+func NewHeaderRoundTripper(headers map[string]string, rt http.RoundTripper) http.RoundTripper {
+	return &headerRoundTripper{
+		headers: headers,
+		rt:      rt,
+	}
+}
+
+func (h *headerRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	for k, v := range h.headers {
+		if req.Header.Get(k) == "" {
+			req.Header.Set(k, v)
+		}
+	}
+	return h.rt.RoundTrip(req)
 }

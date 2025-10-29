@@ -143,12 +143,12 @@ func (c *Sandbox) Pty() *commands.Pty {
 	return c.pty
 }
 
-func (c *Sandbox) GetSandbox(ctx context.Context, sandboxID string) (*SandboxDetail, error) {
+func (c *Sandbox) GetSandbox(ctx context.Context) (*SandboxDetail, error) {
 	resp, err := c.ApiRequest(ctx).
 		SetContext(ctx).
 		SetResult(SandboxDetail{}).
 		SetError(ErrorResponse{}).
-		Post("/secvirt/v2/sandboxes/" + sandboxID)
+		Get("/secvirt/v2/sandboxes/" + c.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -159,11 +159,11 @@ func (c *Sandbox) GetSandbox(ctx context.Context, sandboxID string) (*SandboxDet
 	return resp.Result().(*SandboxDetail), nil
 }
 
-func (c *Sandbox) StopSandbox(ctx context.Context, sandboxID string) error {
+func (c *Sandbox) StopSandbox(ctx context.Context) error {
 	resp, err := c.ApiRequest(ctx).
 		SetContext(ctx).
 		SetError(ErrorResponse{}).
-		Post("/secvirt/v2/sandboxes/" + sandboxID + "/stop")
+		Post("/secvirt/v2/sandboxes/" + c.ID + "/stop")
 	if err != nil {
 		return err
 	}
@@ -174,11 +174,11 @@ func (c *Sandbox) StopSandbox(ctx context.Context, sandboxID string) error {
 	return nil
 }
 
-func (c *Sandbox) StartSandbox(ctx context.Context, sandboxID string) error {
+func (c *Sandbox) StartSandbox(ctx context.Context) error {
 	resp, err := c.ApiRequest(ctx).
 		SetContext(ctx).
 		SetError(ErrorResponse{}).
-		Post("/secvirt/v2/sandboxes/" + sandboxID + "/start")
+		Post("/secvirt/v2/sandboxes/" + c.ID + "/start")
 	if err != nil {
 		return err
 	}
@@ -189,11 +189,30 @@ func (c *Sandbox) StartSandbox(ctx context.Context, sandboxID string) error {
 	return nil
 }
 
-func (c *Sandbox) DestroySandbox(ctx context.Context, sandboxID string) error {
+func (c *Sandbox) DestroySandbox(ctx context.Context) error {
 	resp, err := c.ApiRequest(ctx).
 		SetContext(ctx).
 		SetError(ErrorResponse{}).
-		Post("/secvirt/v2/sandboxes/" + sandboxID + "/destroy")
+		Post("/secvirt/v2/sandboxes/" + c.ID + "/destroy")
+	if err != nil {
+		return err
+	}
+	if resp.IsError() {
+		return resp.Error().(*ErrorResponse)
+	}
+
+	return nil
+}
+
+func (c *Sandbox) PluginInstall(ctx context.Context, packageName string) error {
+	resp, err := c.ApiRequest(ctx).
+		SetContext(ctx).
+		SetBody(map[string]any{
+			"user_id":      c.User,
+			"package_name": packageName,
+		}).
+		SetError(ErrorResponse{}).
+		Post("/secvirt/v2/sandboxes/plugin/install")
 	if err != nil {
 		return err
 	}
