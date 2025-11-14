@@ -204,21 +204,24 @@ func (c *Sandbox) DestroySandbox(ctx context.Context) error {
 	return nil
 }
 
-func (c *Sandbox) PluginInstall(ctx context.Context, packageName string) error {
+func (c *Sandbox) PackageInstall(ctx context.Context, req PackageInstallRequest) (*InstallDetail, error) {
 	resp, err := c.ApiRequest(ctx).
 		SetContext(ctx).
 		SetBody(map[string]any{
 			"user_id":      c.User,
-			"package_name": packageName,
+			"package_type": req.PackageType,
+			"package_name": req.PackageName,
+			"destination":  req.Destination,
 		}).
+		SetResult(InstallDetail{}).
 		SetError(ErrorResponse{}).
-		Post("/secvirt/v2/sandboxes/plugin/install")
+		Post("/secvirt/v2/sandboxes/package/install")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if resp.IsError() {
-		return resp.Error().(*ErrorResponse)
+		return nil, resp.Error().(*ErrorResponse)
 	}
 
-	return nil
+	return resp.Result().(*InstallDetail), nil
 }

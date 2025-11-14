@@ -83,6 +83,23 @@ type SandboxDetail struct {
 	LastActionTime int64    `json:"last_action_time"`
 }
 
+const (
+	PackageTypePlugin  = "plugin"
+	PackageTypeArchive = "archive"
+	PackageTypeFile    = "file"
+)
+
+type PackageInstallRequest struct {
+	PackageType string `json:"package_type" binding:"required"`
+	PackageName string `json:"package_name" binding:"required"`
+	Destination string `json:"destination"`
+}
+
+type InstallDetail struct {
+	UserPath     string `json:"user_path,omitempty"`
+	RelativePath string `json:"relative_path,omitempty"`
+}
+
 type ErrorResponse struct {
 	Code    int    `json:"code"`
 	Message string `json:"message,omitempty"`

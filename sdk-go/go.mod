@@ -11,7 +11,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.63.0
 	google.golang.org/protobuf v1.36.6
-	trpc.group/trpc-go/trpc-a2a-go v0.2.4
+	trpc.group/trpc-go/trpc-a2a-go v0.2.5
 )
 
 require (

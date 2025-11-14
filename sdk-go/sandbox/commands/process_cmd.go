@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"runtime"
@@ -115,7 +116,7 @@ func (c *Cmd) Start(
 	}
 
 	if !stream.Receive() {
-		return nil, errors.New("failed to start process")
+		return nil, fmt.Errorf("failed to start process: %s", stream.Err())
 	}
 
 	return &CommandHandle{

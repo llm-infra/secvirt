@@ -78,7 +78,12 @@ func TestDasMCP(t *testing.T) {
 	assert.NoError(t, err)
 
 	// 安装包
-	err = sbx.PluginInstall(t.Context(), "mcp-server-ngfw-V1.0.1-linux-x86-20251028065514.dmcp")
+	_, err = sbx.PackageInstall(t.Context(),
+		sandbox.PackageInstallRequest{
+			PackageType: sandbox.PackageTypePlugin,
+			PackageName: "das-mcp-connector-V1.0.0-linux-x86-20231010120000.dmcp",
+			Destination: "",
+		})
 	assert.NoError(t, err)
 
 	// 启动MCP
