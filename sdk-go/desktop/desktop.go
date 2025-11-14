@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/llm-infra/secvirt/sdk-go/sandbox"
 	"github.com/llm-infra/secvirt/sdk-go/sandbox/commands"
@@ -44,8 +45,19 @@ func (s *Sandbox) NewLeo(ctx context.Context, port int) (*client.A2AClient, erro
 		return nil, err
 	}
 
-	s.leoHandle = handle
-	return s.NewA2AClient(ctx, port)
+	for {
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		default:
+			res, err := s.ProxyRequest(ctx, port).Get("")
+			if err == nil && res.StatusCode() != http.StatusBadGateway {
+				s.leoHandle = handle
+				return s.NewA2AClient(ctx, port)
+			}
+			time.Sleep(time.Second)
+		}
+	}
 }
 
 func (s *Sandbox) CloseLeo(ctx context.Context) error {
