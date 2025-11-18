@@ -24,7 +24,7 @@ func TestSandboxRun(t *testing.T) {
 		})
 	assert.NoError(t, err)
 
-	cli, err := sbx.NewLeo(t.Context(), 8003)
+	cli, err := sbx.NewLeo(t.Context(), 8003, "")
 	assert.NoError(t, err)
 
 	card, err := cli.GetAgentCard(t.Context(), "")

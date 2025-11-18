@@ -83,9 +83,9 @@ func NewSandbox(ctx context.Context, opts ...Option) (*Sandbox, error) {
 		return nil, err
 	}
 
-	sbx.fs = filesystem.NewFileSystem(prxBaseUrl, res.Name, opt.user)
-	sbx.cmd = commands.NewCmd(prxBaseUrl, res.Name, opt.user)
-	sbx.pty = commands.NewPty(prxBaseUrl, res.Name, opt.user)
+	sbx.fs = filesystem.NewFileSystem(prxBaseUrl, res.Name, res.User)
+	sbx.cmd = commands.NewCmd(prxBaseUrl, res.Name, res.User)
+	sbx.pty = commands.NewPty(prxBaseUrl, res.Name, res.User)
 	sbx.SandboxDetail = res
 	return sbx, nil
 }

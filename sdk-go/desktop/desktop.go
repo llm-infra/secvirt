@@ -35,11 +35,11 @@ const (
 	LeoA2AServerEnvPort = "CODER_AGENT_PORT"
 )
 
-func (s *Sandbox) NewLeo(ctx context.Context, port int) (*client.A2AClient, error) {
+func (s *Sandbox) NewLeo(ctx context.Context, port int, cwd string) (*client.A2AClient, error) {
 	handle, err := s.Cmd().Start(ctx,
 		LeoA2AServerBin,
 		map[string]string{LeoA2AServerEnvPort: strconv.Itoa(port)},
-		"",
+		cwd,
 	)
 	if err != nil {
 		return nil, err
