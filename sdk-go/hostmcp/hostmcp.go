@@ -33,34 +33,6 @@ func NewSandbox(ctx context.Context, opts ...sandbox.Option) (*Sandbox, error) {
 	return &Sandbox{Sandbox: client}, nil
 }
 
-func (s *Sandbox) GetMcpConfig(ctx context.Context, id string) (map[string]ServerEntry, error) {
-	type PaginatedResponse struct {
-		Data map[string]ServerEntry `json:"clients"`
-	}
-
-	resp, err := s.ApiRequest(ctx).
-		SetQueryParams(map[string]string{
-			"cursor": id,
-			"limit":  "1",
-		}).
-		SetResult(PaginatedResponse{}).
-		SetError(sandbox.ErrorResponse{}).
-		Get("/secvirt/v2/mcp/clients")
-	if err != nil {
-		return nil, err
-	}
-	if resp.IsError() {
-		return nil, resp.Error().(*sandbox.ErrorResponse)
-	}
-
-	result := resp.Result().(*PaginatedResponse)
-	if len(result.Data) == 0 {
-		return nil, errors.New("mcp config not found")
-	}
-
-	return result.Data, nil
-}
-
 func (s *Sandbox) GetLaunchMCPs(ctx context.Context) ([]MCPEndpoint, error) {
 	resp, err := s.ProxyRequest(ctx, defaultMcpServerPort).
 		SetResult([]MCPEndpoint{}).

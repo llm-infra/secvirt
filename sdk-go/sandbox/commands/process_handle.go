@@ -13,9 +13,17 @@ import (
 type HandleOption func(*HandleOptions)
 
 type HandleOptions struct {
-	onStdout func(string)
-	onStderr func(string)
+	onStdout func([]byte)
+	onStderr func([]byte)
 	onPty    func([]byte)
+}
+
+func WithStdout(fn func([]byte)) HandleOption {
+	return func(ho *HandleOptions) { ho.onStdout = fn }
+}
+
+func WithStderr(fn func([]byte)) HandleOption {
+	return func(ho *HandleOptions) { ho.onStderr = fn }
 }
 
 func WithPty(fn func([]byte)) HandleOption {
@@ -66,14 +74,14 @@ func (h *CommandHandle) Wait(ctx context.Context, opts ...HandleOption) (*Comman
 			if data := data.GetStdout(); len(data) > 0 {
 				stdout.WriteString(string(data))
 				if opt.onStdout != nil {
-					opt.onStdout(string(data))
+					opt.onStdout(data)
 				}
 			}
 
 			if data := data.GetStderr(); len(data) > 0 {
 				stderr.WriteString(string(data))
 				if opt.onStderr != nil {
-					opt.onStderr(string(data))
+					opt.onStderr(data)
 				}
 			}
 
@@ -109,8 +117,8 @@ func (h *CommandHandle) Wait(ctx context.Context, opts ...HandleOption) (*Comman
 	return result, nil
 }
 
-func (c *CommandHandle) Kill(ctx context.Context) error {
-	return c.kill(ctx, c.pid)
+func (c *CommandHandle) Kill() error {
+	return c.kill(context.Background(), c.pid)
 }
 
 type CommandResult struct {

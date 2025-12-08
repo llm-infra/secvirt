@@ -55,18 +55,15 @@ func write[T FileSource](
 	}()
 
 	buf := make([]byte, 64*1024)
-	first := true
 
 	for {
 		n, err := reader.Read(buf)
 		if n > 0 {
 			msg := &filesystem.WriteRequest{
+				Path:  path,
 				Chunk: buf[:n],
 			}
-			if first {
-				msg.Path = path
-				first = false
-			}
+
 			if err := stream.Send(msg); err != nil {
 				return err
 			}

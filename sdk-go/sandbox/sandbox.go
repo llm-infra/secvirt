@@ -131,6 +131,10 @@ func (c *Sandbox) ApiRequest(ctx context.Context) *resty.Request {
 	return req
 }
 
+func (c *Sandbox) HomeDir() string {
+	return fmt.Sprintf("/home/%s", c.User)
+}
+
 func (c *Sandbox) Filesystem() *filesystem.Filesystem {
 	return c.fs
 }

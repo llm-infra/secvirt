@@ -62,7 +62,7 @@ func (s *Sandbox) NewLeo(ctx context.Context, port int, cwd string) (*client.A2A
 
 func (s *Sandbox) CloseLeo(ctx context.Context) error {
 	if s.leoHandle != nil {
-		return s.leoHandle.Kill(ctx)
+		return s.leoHandle.Kill()
 	}
 	return nil
 }

@@ -18,7 +18,7 @@ func GenSandboxHeader(port int, sandboxID, user string) map[string]string {
 	}
 
 	if len(user) > 0 {
-		headers["X-User"] = user
+		headers["X-USER"] = user
 	}
 
 	return headers
