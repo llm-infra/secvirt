@@ -105,7 +105,7 @@ func (it *Item) UnmarshalJSON(b []byte) error {
 	if err := json.Unmarshal(b, &raw); err != nil {
 		return err
 	}
-	// 已知字段剔除
+
 	for _, k := range []string{
 		"id", "type", "text",
 		"command", "aggregated_output", "status", "exit_code",
