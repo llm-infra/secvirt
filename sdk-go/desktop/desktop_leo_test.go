@@ -13,7 +13,7 @@ func TestLeoChat(t *testing.T) {
 	sbx, err := NewSandbox(
 		t.Context(),
 		sandbox.WithHost("10.50.10.18"),
-		sandbox.WithUser("mel2oo"),
+		sandbox.WithUser("mel2oo1"),
 	)
 	assert.NoError(t, err)
 	defer sbx.DestroySandbox(t.Context())

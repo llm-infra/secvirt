@@ -39,6 +39,7 @@ func NewStream[T any](ctx context.Context, handle *CommandHandle, decoder Decode
 		)
 		s.err = err
 		s.done = true
+		s.handle.kill(context.Background(), s.handle.pid)
 		close(s.events)
 	}()
 
