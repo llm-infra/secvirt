@@ -36,8 +36,10 @@ const (
 	LeoEventTypeToolUse    = "tool_use"
 	LeoEventTypeToolResult = "tool_result"
 	LeoEventTypeResult     = "result"
+	LeoEventTypeError      = "error"
 
-	LeoToolShellCommand = "run_shell_command"
+	LeoToolShellCommand    = "run_shell_command"
+	LeoToolGoogleWebSearch = "google_web_search"
 )
 
 type LeoEvent struct {
@@ -55,17 +57,26 @@ type LeoEvent struct {
 	Delta   bool   `json:"delta,omitempty"`
 
 	// tool_use only
-	ToolName   string          `json:"tool_name,omitempty"`
-	ToolID     string          `json:"tool_id,omitempty"`
-	Parameters json.RawMessage `json:"parameters,omitempty"` // 不同工具参数不同，用 RawMessage 最稳
+	ToolName   string         `json:"tool_name,omitempty"`
+	ToolID     string         `json:"tool_id,omitempty"`
+	Parameters map[string]any `json:"parameters,omitempty"`
 
 	// tool_result only
-	// ToolID 复用上面字段
-	Status string          `json:"status,omitempty"`
-	Output json.RawMessage `json:"output,omitempty"` // 可能是 string 或 object，用 RawMessage 兜底
+	Status string `json:"status,omitempty"`
+	Output string `json:"output,omitempty"`
 
 	// result only
 	Stats *LeoStats `json:"stats,omitempty"`
+
+	// tool_result and result
+	Error *struct {
+		Type    string `json:"type,omitempty"`
+		Message string `json:"message,omitempty"`
+	} `json:"error,omitempty"`
+
+	// error only
+	Severity string `json:"severity,omitempty"`
+	Message  string `json:"message,omitempty"`
 }
 
 type LeoStats struct {
@@ -77,6 +88,7 @@ type LeoStats struct {
 }
 
 func (e *LeoEvent) Decode(data []byte, evt any) error {
+	fmt.Println(string(data))
 	return json.Unmarshal(data, evt)
 }
 

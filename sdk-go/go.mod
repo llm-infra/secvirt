@@ -6,7 +6,7 @@ require (
 	connectrpc.com/connect v1.18.1
 	github.com/dubonzi/otelresty v1.6.0
 	github.com/go-resty/resty/v2 v2.16.5
-	github.com/mel2oo/go-dkit v0.0.0-20251114083123-0d073e2ff2f4
+	github.com/mel2oo/go-dkit v0.0.0-20251212085047-e135378c0cd3
 	github.com/modelcontextprotocol/go-sdk v1.0.0
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.63.0
