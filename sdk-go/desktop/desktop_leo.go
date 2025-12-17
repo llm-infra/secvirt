@@ -88,7 +88,6 @@ type LeoStats struct {
 }
 
 func (e *LeoEvent) Decode(data []byte, evt any) error {
-	fmt.Println(string(data))
 	return json.Unmarshal(data, evt)
 }
 
