@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"github.com/llm-infra/secvirt/sdk-go/sandbox/commands"
 )
@@ -19,7 +20,8 @@ func (s *Sandbox) LeoChat(ctx context.Context, content string,
 	}
 
 	handle, err := s.Cmd().Start(ctx,
-		fmt.Sprintf("leo -p '%s' --output-format stream-json --yolo", content),
+		fmt.Sprintf("leo -p %s --output-format stream-json --yolo",
+			strconv.Quote(content)),
 		opt.envs,
 		opt.cwd,
 	)
@@ -40,6 +42,9 @@ const (
 
 	LeoToolShellCommand    = "run_shell_command"
 	LeoToolGoogleWebSearch = "google_web_search"
+
+	LeoStatusSuccess = "success"
+	LeoStatusError   = "error"
 )
 
 type LeoEvent struct {
@@ -62,14 +67,14 @@ type LeoEvent struct {
 	Parameters map[string]any `json:"parameters,omitempty"`
 
 	// tool_result only
-	Status string `json:"status,omitempty"`
 	Output string `json:"output,omitempty"`
 
 	// result only
 	Stats *LeoStats `json:"stats,omitempty"`
 
 	// tool_result and result
-	Error *struct {
+	Status string `json:"status,omitempty"`
+	Error  *struct {
 		Type    string `json:"type,omitempty"`
 		Message string `json:"message,omitempty"`
 	} `json:"error,omitempty"`
