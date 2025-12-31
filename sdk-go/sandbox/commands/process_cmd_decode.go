@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+
+	"github.com/sirupsen/logrus"
 )
 
 type Decoder interface {
@@ -34,6 +36,12 @@ func NewStream[T any](ctx context.Context, handle *CommandHandle, decoder Decode
 					if json.Valid(data) {
 						s.events <- data
 					}
+				},
+			),
+			WithStderr(
+				func(b []byte) {
+					logrus.WithContext(ctx).
+						Debugf("command stderr: %s", string(b))
 				},
 			),
 		)

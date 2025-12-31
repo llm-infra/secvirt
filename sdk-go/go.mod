@@ -8,6 +8,7 @@ require (
 	github.com/go-resty/resty/v2 v2.16.5
 	github.com/mel2oo/go-dkit v0.0.0-20251219074814-ca1a4ac7f68b
 	github.com/modelcontextprotocol/go-sdk v1.0.0
+	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.63.0
 	google.golang.org/protobuf v1.36.10
