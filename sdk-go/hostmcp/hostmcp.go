@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	defaultMcpServerPort = 8001
-	defaultMcpRouterPort = 8002
+	DefaultMcpServerPort = 8001
+	DefaultMcpRouterPort = 8002
 )
 
 type Sandbox struct {
@@ -25,7 +25,7 @@ func NewSandbox(ctx context.Context, opts ...sandbox.Option) (*Sandbox, error) {
 	client, err := sandbox.NewSandbox(ctx,
 		append(opts,
 			sandbox.WithTemplate(sandbox.TemplateHostMCP),
-			sandbox.WithHealthPorts([]int{defaultMcpServerPort, defaultMcpRouterPort}))...)
+			sandbox.WithHealthPorts([]int{DefaultMcpServerPort, DefaultMcpRouterPort}))...)
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +34,7 @@ func NewSandbox(ctx context.Context, opts ...sandbox.Option) (*Sandbox, error) {
 }
 
 func (s *Sandbox) GetLaunchMCPs(ctx context.Context) ([]MCPEndpoint, error) {
-	resp, err := s.ProxyRequest(ctx, defaultMcpServerPort).
+	resp, err := s.ProxyRequest(ctx, DefaultMcpServerPort).
 		SetResult([]MCPEndpoint{}).
 		SetError(sandbox.ErrorResponse{}).
 		Get("/hostmcp/v1/mcps")
@@ -51,7 +51,7 @@ func (s *Sandbox) GetLaunchMCPs(ctx context.Context) ([]MCPEndpoint, error) {
 
 func (s *Sandbox) Launch(ctx context.Context, preloads []Preload,
 	config *ServersFile, reload bool) ([]MCPEndpoint, error) {
-	resp, err := s.ProxyRequest(ctx, defaultMcpServerPort).
+	resp, err := s.ProxyRequest(ctx, DefaultMcpServerPort).
 		SetBody(map[string]any{
 			"preloads": preloads,
 			"config":   config,
@@ -79,7 +79,7 @@ func (s *Sandbox) Connect(ctx context.Context, endpoint MCPEndpoint,
 ) (*mcp.ClientSession, error) {
 	tr := otelhttp.NewTransport(
 		spec.NewHeaderRoundTripper(
-			spec.GenSandboxHeader(defaultMcpRouterPort, s.Name, ""),
+			spec.GenSandboxHeader(DefaultMcpRouterPort, s.Name, ""),
 			http.DefaultTransport,
 		),
 		otelhttp.WithTracerProvider(otel.Standard().TracerProvider),

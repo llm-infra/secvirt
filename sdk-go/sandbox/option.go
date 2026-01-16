@@ -62,9 +62,10 @@ func WithHealthPorts(ports []int) Option {
 type TemplateType string
 
 const (
-	TemplateCodeIDE TemplateType = "codeide"
-	TemplateHostMCP TemplateType = "hostmcp"
-	TemplateDesktop TemplateType = "desktop"
+	TemplateCodeIDE  TemplateType = "codeide"
+	TemplateHostMCP  TemplateType = "hostmcp"
+	TemplateDesktop  TemplateType = "desktop"
+	TemplateAllInOne TemplateType = "allinone"
 )
 
 type SandboxDetail struct {

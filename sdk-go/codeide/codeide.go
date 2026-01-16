@@ -9,7 +9,7 @@ import (
 	"github.com/mel2oo/go-dkit/json"
 )
 
-var defaultCodeIDEPort = 8000
+var DefaultCodeIDEPort = 8000
 
 type Sandbox struct {
 	*sandbox.Sandbox
@@ -19,7 +19,7 @@ func NewSandbox(ctx context.Context, opts ...sandbox.Option) (*Sandbox, error) {
 	client, err := sandbox.NewSandbox(ctx,
 		append(opts,
 			sandbox.WithTemplate(sandbox.TemplateCodeIDE),
-			sandbox.WithHealthPorts([]int{defaultCodeIDEPort}))...)
+			sandbox.WithHealthPorts([]int{DefaultCodeIDEPort}))...)
 	if err != nil {
 		return nil, err
 	}
@@ -28,7 +28,7 @@ func NewSandbox(ctx context.Context, opts ...sandbox.Option) (*Sandbox, error) {
 }
 
 func (s *Sandbox) Packages(ctx context.Context, lang string) ([]PackagesResponse, error) {
-	resp, err := s.ProxyRequest(ctx, defaultCodeIDEPort).
+	resp, err := s.ProxyRequest(ctx, DefaultCodeIDEPort).
 		SetResult([]PackagesResponse{}).
 		SetError(sandbox.ErrorResponse{}).
 		Get(fmt.Sprintf("/codeide/v1/packages/%s", lang))
@@ -45,7 +45,7 @@ func (s *Sandbox) Packages(ctx context.Context, lang string) ([]PackagesResponse
 
 func (s *Sandbox) RunCodeV1(ctx context.Context, lang, code string,
 	inputs map[string]any) (*RunCodeResponseV1, error) {
-	resp, err := s.ProxyRequest(ctx, defaultCodeIDEPort).
+	resp, err := s.ProxyRequest(ctx, DefaultCodeIDEPort).
 		SetBody(map[string]any{
 			"lang":   lang,
 			"code":   code,
@@ -82,7 +82,7 @@ func (s *Sandbox) RunCodeV1(ctx context.Context, lang, code string,
 
 func (s *Sandbox) RunCode(ctx context.Context, lang, code string,
 	inputs map[string]any) (*RunCodeResponse, error) {
-	resp, err := s.ProxyRequest(ctx, defaultCodeIDEPort).
+	resp, err := s.ProxyRequest(ctx, DefaultCodeIDEPort).
 		SetBody(map[string]any{
 			"lang":   lang,
 			"code":   code,
