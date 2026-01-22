@@ -4,13 +4,10 @@ import (
 	"context"
 
 	"github.com/llm-infra/secvirt/sdk-go/sandbox"
-	"github.com/llm-infra/secvirt/sdk-go/sandbox/commands"
 )
 
 type Sandbox struct {
 	*sandbox.Sandbox
-
-	leoHandle *commands.CommandHandle
 }
 
 func NewSandbox(ctx context.Context, opts ...sandbox.Option) (*Sandbox, error) {

@@ -8,20 +8,20 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type Decoder interface {
-	Decode(data []byte, v any) error
+type Decoder[T any] interface {
+	Decode(data []byte) (T, error)
 }
 
 type Stream[T any] struct {
 	handle *CommandHandle
 	events chan []byte
 
-	decoder Decoder
+	decoder Decoder[T]
 	err     error
 	done    bool
 }
 
-func NewStream[T any](ctx context.Context, handle *CommandHandle, decoder Decoder) *Stream[T] {
+func NewStream[T any](ctx context.Context, handle *CommandHandle, decoder Decoder[T]) *Stream[T] {
 	s := &Stream[T]{
 		handle: handle,
 		events: make(chan []byte),
@@ -70,11 +70,7 @@ func (s *Stream[T]) Recv() (T, error) {
 		return nxt, io.EOF
 	}
 
-	if err := s.decoder.Decode(raw, &nxt); err != nil {
-		return nxt, err
-	}
-
-	return nxt, nil
+	return s.decoder.Decode(raw)
 }
 
 func (s *Stream[T]) Close() error {

@@ -5,6 +5,8 @@ import (
 
 	"github.com/llm-infra/secvirt/sdk-go/codeide"
 	"github.com/llm-infra/secvirt/sdk-go/desktop"
+	"github.com/llm-infra/secvirt/sdk-go/desktop/claude"
+	"github.com/llm-infra/secvirt/sdk-go/desktop/codex"
 	"github.com/llm-infra/secvirt/sdk-go/hostmcp"
 	"github.com/llm-infra/secvirt/sdk-go/sandbox"
 	"github.com/llm-infra/secvirt/sdk-go/sandbox/commands"
@@ -71,11 +73,27 @@ func (s *Sandbox) Connect(ctx context.Context, endpoint hostmcp.MCPEndpoint,
 }
 
 // desktop
-func (s *Sandbox) LeoChat(ctx context.Context, content string,
-	opts ...desktop.Option) (*commands.Stream[desktop.LeoEvent], error) {
-	return s.desktop.LeoChat(ctx, content, opts...)
+func (s *Sandbox) SetCodexConfig(ctx context.Context, config *codex.Config,
+	opts ...desktop.Option) error {
+	return s.desktop.SetCodexConfig(ctx, config, opts...)
 }
+
 func (s *Sandbox) CodexChat(ctx context.Context, content string,
 	opts ...desktop.Option) (*commands.Stream[desktop.CodexEvent], error) {
 	return s.desktop.CodexChat(ctx, content, opts...)
+}
+
+func (s *Sandbox) SetClaudeSettings(ctx context.Context, settings *claude.Settings,
+	opts ...desktop.Option) error {
+	return s.desktop.SetClaudeSettings(ctx, settings, opts...)
+}
+
+func (s *Sandbox) SetSkills(ctx context.Context, skills []desktop.Skill,
+	opts ...desktop.Option) error {
+	return s.desktop.SetSkills(ctx, skills, opts...)
+}
+
+func (s *Sandbox) ClaudeChat(ctx context.Context, content string,
+	opts ...desktop.Option) (*commands.Stream[[]claude.Message], error) {
+	return s.desktop.ClaudeChat(ctx, content, opts...)
 }

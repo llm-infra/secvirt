@@ -101,6 +101,7 @@ func (c *Cmd) Start(
 	cmd string,
 	envs map[string]string,
 	cwd string,
+	stdin bool,
 ) (*CommandHandle, error) {
 	stream, err := c.client.Start(ctx, connect.NewRequest(&process.StartRequest{
 		Process: &process.ProcessConfig{
@@ -109,6 +110,7 @@ func (c *Cmd) Start(
 			Envs: envs,
 			Cwd:  &cwd,
 		},
+		Stdin: &stdin,
 	}))
 	if err != nil {
 		return nil, err
@@ -130,9 +132,10 @@ func (c *Cmd) Run(
 	cmd string,
 	envs map[string]string,
 	cwd string,
+	stdin bool,
 	opts ...HandleOption,
 ) (*CommandResult, error) {
-	h, err := c.Start(ctx, cmd, envs, cwd)
+	h, err := c.Start(ctx, cmd, envs, cwd, stdin)
 	if err != nil {
 		return nil, err
 	}

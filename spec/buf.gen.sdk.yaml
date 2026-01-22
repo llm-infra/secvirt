@@ -6,9 +6,13 @@ plugins:
   - plugin: connect-go
     out: ../sdk-go/sandbox/spec
     opt: paths=source_relative
+  - plugin: java
+    out: ../sdk-java/spec
 
 managed:
   enabled: true
   optimize_for: SPEED
   go_package_prefix:
     default: github.com/llm-infra/secvirt/sdk-go/sandbox/spec
+  java_package_prefix:
+    default: com.sandbox

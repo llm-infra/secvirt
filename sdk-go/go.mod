@@ -4,8 +4,11 @@ go 1.24.4
 
 require (
 	connectrpc.com/connect v1.18.1
+	github.com/BurntSushi/toml v1.6.0
 	github.com/dubonzi/otelresty v1.6.0
 	github.com/go-resty/resty/v2 v2.16.5
+	github.com/google/uuid v1.6.0
+	github.com/llm-infra/acp/sdk/go v0.0.0-20251217030730-ff6d3724b688
 	github.com/mel2oo/go-dkit v0.0.0-20251219074814-ca1a4ac7f68b
 	github.com/modelcontextprotocol/go-sdk v1.0.0
 	github.com/sirupsen/logrus v1.9.3
@@ -34,11 +37,11 @@ require (
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/goccy/go-yaml v1.19.0 // indirect
 	github.com/google/jsonschema-go v0.3.0 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.1 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
+	github.com/manucorporat/sse v0.0.0-20160126180136-ee05b128a739 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect

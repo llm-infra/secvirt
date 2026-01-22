@@ -14,7 +14,7 @@ func TestCmd(t *testing.T) {
 		"root",
 	)
 
-	res, err := cmd.Run(t.Context(), "gemini-a2a-server", nil, "")
+	res, err := cmd.Run(t.Context(), "gemini-a2a-server", nil, "", true)
 	assert.NoError(t, err)
 	fmt.Println(res)
 }
