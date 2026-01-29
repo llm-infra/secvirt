@@ -6,39 +6,39 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/BurntSushi/toml"
+	"github.com/joho/godotenv"
 	"github.com/llm-infra/acp/sdk/go/acp"
-	"github.com/llm-infra/secvirt/sdk-go/desktop/codex"
+	"github.com/llm-infra/secvirt/sdk-go/desktop/gemini"
 	"github.com/llm-infra/secvirt/sdk-go/sandbox/commands"
 )
 
-func (s *Sandbox) SetCodexConfig(ctx context.Context, config *codex.Config,
+func (s *Sandbox) SetGeminiConfig(ctx context.Context, config gemini.Config,
 	opts ...Option) error {
 	opt := NewOptions(s)
 	for _, o := range opts {
 		o(opt)
 	}
 
-	data, err := toml.Marshal(config)
+	data, err := godotenv.Marshal(config)
 	if err != nil {
 		return err
 	}
 
 	return s.Filesystem().Write(ctx,
-		filepath.Join(opt.cwd, ".codex", "config.toml"),
-		data,
+		filepath.Join(opt.cwd, ".env"),
+		[]byte(data),
 	)
 }
 
-func (s *Sandbox) CodexChat(ctx context.Context, content string,
-	opts ...Option) (*commands.Stream[codex.Message], error) {
+func (s *Sandbox) GeminiChat(ctx context.Context, content string,
+	opts ...Option) (*commands.Stream[gemini.Message], error) {
 	opt := NewOptions(s)
 	for _, o := range opts {
 		o(opt)
 	}
 
 	handle, err := s.Cmd().Start(ctx,
-		fmt.Sprintf("codex exec %s --skip-git-repo-check --full-auto --json",
+		fmt.Sprintf("gemini -p %s --output-format stream-json --yolo",
 			strconv.Quote(content)),
 		opt.envs,
 		opt.cwd,
@@ -48,10 +48,10 @@ func (s *Sandbox) CodexChat(ctx context.Context, content string,
 		return nil, err
 	}
 
-	return commands.NewStream(ctx, handle, codex.NewDecoder()), nil
+	return commands.NewStream(ctx, handle, gemini.NewDecoder()), nil
 }
 
-func (s *Sandbox) CodexChatWithACPStream(ctx context.Context, content string,
+func (s *Sandbox) GeminiChatWithACPStream(ctx context.Context, content string,
 	opts ...Option) (*commands.Stream[[]acp.Event], error) {
 	opt := NewOptions(s)
 	for _, o := range opts {
@@ -59,7 +59,7 @@ func (s *Sandbox) CodexChatWithACPStream(ctx context.Context, content string,
 	}
 
 	handle, err := s.Cmd().Start(ctx,
-		fmt.Sprintf("codex exec %s --skip-git-repo-check --full-auto --json",
+		fmt.Sprintf("gemini -p %s --output-format stream-json --yolo",
 			strconv.Quote(content)),
 		opt.envs,
 		opt.cwd,
@@ -69,5 +69,5 @@ func (s *Sandbox) CodexChatWithACPStream(ctx context.Context, content string,
 		return nil, err
 	}
 
-	return commands.NewStream(ctx, handle, codex.NewACPDecoder()), nil
+	return commands.NewStream(ctx, handle, gemini.NewACPDecoder()), nil
 }

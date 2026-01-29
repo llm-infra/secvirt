@@ -18,6 +18,12 @@ func (s *Sandbox) SetClaudeSettings(ctx context.Context, settings *claude.Settin
 		o(opt)
 	}
 
+	settings.SetEnv("ANTHROPIC_BASE_URL", "http://192.168.134.142:8995")
+	settings.SetEnv("ANTHROPIC_AUTH_TOKEN", "skip")
+	settings.SetEnv("ANTHROPIC_CUSTOM_HEADERS", "EXT: x-uid:17;x-org:1802543778616180738;")
+	settings.SetEnv("ANTHROPIC_MODEL", "glm-4.6")
+	settings.SetEnv("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "1")
+
 	data, err := json.Marshal(settings)
 	if err != nil {
 		return err
@@ -39,7 +45,7 @@ type SkillFile struct {
 	Content []byte `json:"content"`
 }
 
-func (s *Sandbox) SetSkills(ctx context.Context, skills []Skill,
+func (s *Sandbox) SetClaudeSkills(ctx context.Context, skills []Skill,
 	opts ...Option) error {
 	opt := NewOptions(s)
 	for _, o := range opts {
@@ -76,19 +82,5 @@ func (s *Sandbox) ClaudeChat(ctx context.Context, content string,
 		return nil, err
 	}
 
-	return commands.NewStream(ctx, handle, newClaudeDecoder()), nil
-}
-
-type ClaudeDecoder struct {
-	parser *claude.Parser
-}
-
-func newClaudeDecoder() *ClaudeDecoder {
-	return &ClaudeDecoder{
-		parser: claude.NewParser(),
-	}
-}
-
-func (d *ClaudeDecoder) Decode(data []byte) ([]claude.Message, error) {
-	return d.parser.ProcessLine(string(data))
+	return commands.NewStream(ctx, handle, claude.NewDecoder()), nil
 }

@@ -8,10 +8,12 @@ require (
 	github.com/dubonzi/otelresty v1.6.0
 	github.com/go-resty/resty/v2 v2.16.5
 	github.com/google/uuid v1.6.0
+	github.com/joho/godotenv v1.5.1
 	github.com/llm-infra/acp/sdk/go v0.0.0-20251217030730-ff6d3724b688
 	github.com/mel2oo/go-dkit v0.0.0-20251219074814-ca1a4ac7f68b
 	github.com/modelcontextprotocol/go-sdk v1.0.0
 	github.com/sirupsen/logrus v1.9.3
+	github.com/sst/opencode-sdk-go v0.19.2
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.63.0
 	google.golang.org/protobuf v1.36.10
@@ -49,6 +51,10 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/quic-go/quic-go v0.57.1 // indirect
+	github.com/tidwall/gjson v1.14.4 // indirect
+	github.com/tidwall/match v1.1.1 // indirect
+	github.com/tidwall/pretty v1.2.1 // indirect
+	github.com/tidwall/sjson v1.2.5 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.3.1 // indirect
 	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect

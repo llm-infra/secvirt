@@ -2,11 +2,15 @@ package allinone
 
 import (
 	"context"
+	"io"
 
+	"github.com/llm-infra/acp/sdk/go/acp"
 	"github.com/llm-infra/secvirt/sdk-go/codeide"
 	"github.com/llm-infra/secvirt/sdk-go/desktop"
 	"github.com/llm-infra/secvirt/sdk-go/desktop/claude"
 	"github.com/llm-infra/secvirt/sdk-go/desktop/codex"
+	"github.com/llm-infra/secvirt/sdk-go/desktop/gemini"
+	"github.com/llm-infra/secvirt/sdk-go/desktop/opencode"
 	"github.com/llm-infra/secvirt/sdk-go/hostmcp"
 	"github.com/llm-infra/secvirt/sdk-go/sandbox"
 	"github.com/llm-infra/secvirt/sdk-go/sandbox/commands"
@@ -73,16 +77,6 @@ func (s *Sandbox) Connect(ctx context.Context, endpoint hostmcp.MCPEndpoint,
 }
 
 // desktop
-func (s *Sandbox) SetCodexConfig(ctx context.Context, config *codex.Config,
-	opts ...desktop.Option) error {
-	return s.desktop.SetCodexConfig(ctx, config, opts...)
-}
-
-func (s *Sandbox) CodexChat(ctx context.Context, content string,
-	opts ...desktop.Option) (*commands.Stream[desktop.CodexEvent], error) {
-	return s.desktop.CodexChat(ctx, content, opts...)
-}
-
 func (s *Sandbox) SetClaudeSettings(ctx context.Context, settings *claude.Settings,
 	opts ...desktop.Option) error {
 	return s.desktop.SetClaudeSettings(ctx, settings, opts...)
@@ -90,10 +84,60 @@ func (s *Sandbox) SetClaudeSettings(ctx context.Context, settings *claude.Settin
 
 func (s *Sandbox) SetSkills(ctx context.Context, skills []desktop.Skill,
 	opts ...desktop.Option) error {
-	return s.desktop.SetSkills(ctx, skills, opts...)
+	return s.desktop.SetClaudeSkills(ctx, skills, opts...)
 }
 
 func (s *Sandbox) ClaudeChat(ctx context.Context, content string,
 	opts ...desktop.Option) (*commands.Stream[[]claude.Message], error) {
 	return s.desktop.ClaudeChat(ctx, content, opts...)
+}
+
+func (s *Sandbox) SetCodexConfig(ctx context.Context, config *codex.Config,
+	opts ...desktop.Option) error {
+	return s.desktop.SetCodexConfig(ctx, config, opts...)
+}
+
+func (s *Sandbox) CodexChat(ctx context.Context, content string,
+	opts ...desktop.Option) (*commands.Stream[codex.Message], error) {
+	return s.desktop.CodexChat(ctx, content, opts...)
+}
+
+func (s *Sandbox) CodexChatWithACPStream(ctx context.Context, content string,
+	opts ...desktop.Option) (*commands.Stream[[]acp.Event], error) {
+	return s.desktop.CodexChatWithACPStream(ctx, content, opts...)
+}
+
+func (s *Sandbox) SetGeminiConfig(ctx context.Context, config gemini.Config) error {
+	return s.desktop.SetGeminiConfig(ctx, config)
+}
+
+func (s *Sandbox) GeminiChat(ctx context.Context, content string,
+	opts ...desktop.Option) (*commands.Stream[gemini.Message], error) {
+	return s.desktop.GeminiChat(ctx, content, opts...)
+}
+
+func (s *Sandbox) GeminiChatWithACPStream(ctx context.Context, content string,
+	opts ...desktop.Option) (*commands.Stream[[]acp.Event], error) {
+	return s.desktop.GeminiChatWithACPStream(ctx, content, opts...)
+}
+
+// opencode
+func (s *Sandbox) SetOpenCodeConfig(ctx context.Context, config *opencode.Config,
+	opts ...desktop.Option) error {
+	return s.desktop.SetOpenCodeConfig(ctx, config, opts...)
+}
+
+func (s *Sandbox) SetOpenCodeSkills(ctx context.Context, skills map[string]io.Reader,
+	opts ...desktop.Option) error {
+	return s.desktop.SetOpenCodeSkills(ctx, skills, opts...)
+}
+
+func (s *Sandbox) SetOpenCodeAgents(ctx context.Context, agents map[string]io.Reader,
+	opts ...desktop.Option) error {
+	return s.desktop.SetOpenCodeAgents(ctx, agents, opts...)
+}
+
+func (s *Sandbox) OpenCodeChat(ctx context.Context, content string,
+	opts ...desktop.Option) (*commands.Stream[opencode.Message], error) {
+	return s.desktop.OpenCodeChat(ctx, content, opts...)
 }

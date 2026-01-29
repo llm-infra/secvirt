@@ -10,7 +10,8 @@ type Options struct {
 
 func NewOptions(s *Sandbox) *Options {
 	return &Options{
-		cwd: s.HomeDir(),
+		cwd:  s.HomeDir(),
+		envs: make(map[string]string),
 	}
 }
 
