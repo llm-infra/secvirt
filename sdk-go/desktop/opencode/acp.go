@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 
+	"github.com/google/uuid"
 	"github.com/llm-infra/acp/sdk/go/acp"
 	"github.com/sst/opencode-sdk-go"
 )
@@ -44,8 +45,6 @@ func (d *ACPDecoder) Decode(data []byte) ([]acp.Event, error) {
 			evts = append(evts, acp.NewBlockStartEvent(d.blockID))
 		}
 
-		evts = append(evts, acp.NewContentStartEvent(msg.Part.MessageID, d.blockID))
-
 	case opencode.PartTypeStepFinish:
 		tokens, ok := msg.Part.Tokens.(opencode.StepFinishPartTokens)
 		if ok {
@@ -53,8 +52,12 @@ func (d *ACPDecoder) Decode(data []byte) ([]acp.Event, error) {
 			d.output += tokens.Output
 			d.output += tokens.Reasoning
 		}
-
-		evts = append(evts, acp.NewContentEndEvent(msg.Part.MessageID))
+		if msg.Part.Reason == "stop" {
+			evts = append(evts, acp.NewBlockEndEvent(d.blockID, &acp.Usage{
+				PromptTokens:     int64(d.input),
+				CompletionTokens: int64(d.output),
+			}))
+		}
 
 	case opencode.PartTypeTool:
 		state, ok := msg.Part.State.(opencode.ToolPartState)
@@ -63,16 +66,22 @@ func (d *ACPDecoder) Decode(data []byte) ([]acp.Event, error) {
 		}
 
 		if state.Status == opencode.ToolPartStateStatusCompleted {
+			contentID := uuid.NewString()
 			evts = append(evts,
-				acp.NewContentDeltaEvent(msg.Part.MessageID, acp.NewStreamToolCallContent(msg.Part.Tool)),
-				acp.NewContentDeltaEvent(msg.Part.MessageID, acp.NewStreamToolArgsContent(state.JSON.Input.Raw())),
-				acp.NewContentDeltaEvent(msg.Part.MessageID, acp.NewStreamToolResultContent(state.JSON.Output.Raw())),
+				acp.NewContentStartEvent(contentID, d.blockID),
+				acp.NewContentDeltaEvent(contentID, acp.NewStreamToolCallContent(msg.Part.Tool)),
+				acp.NewContentDeltaEvent(contentID, acp.NewStreamToolArgsContent(state.JSON.Input.Raw())),
+				acp.NewContentDeltaEvent(contentID, acp.NewStreamToolResultContent(state.JSON.Output.Raw())),
+				acp.NewContentEndEvent(contentID),
 			)
 		}
 
 	case opencode.PartTypeText:
+		contentID := uuid.NewString()
 		evts = append(evts,
-			acp.NewContentDeltaEvent(msg.Part.MessageID, acp.NewStreamTextContent(msg.Part.Text)),
+			acp.NewContentStartEvent(contentID, d.blockID),
+			acp.NewContentDeltaEvent(contentID, acp.NewStreamTextContent(msg.Part.Text)),
+			acp.NewContentEndEvent(contentID),
 		)
 	}
 
