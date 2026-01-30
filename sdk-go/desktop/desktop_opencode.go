@@ -51,7 +51,7 @@ func (s *Sandbox) SetOpenCodeSkills(ctx context.Context, skills map[string]io.Re
 		}
 
 		_, err = s.Cmd().Run(ctx,
-			fmt.Sprintf("tar -zxvf %s && rm -rf %s", temp, temp),
+			fmt.Sprintf("unzip %s && rm -rf %s", temp, temp),
 			nil,
 			skillPath,
 			false,

@@ -50,11 +50,11 @@ const (
 )
 
 type Mcp struct {
-	Type        string            `json:"type,required"`
-	Command     []string          `json:"command"`
-	Environment map[string]string `json:"environment"`
-	URL         string            `json:"url"`
-	Headers     map[string]string `json:"headers"`
+	Type        string            `json:"type"`
+	Command     []string          `json:"command,omitempty"`
+	Environment map[string]string `json:"environment,omitempty"`
+	URL         string            `json:"url,omitempty"`
+	Headers     map[string]string `json:"headers,omitempty"`
 	Enabled     bool              `json:"enabled"`
 }
 
