@@ -141,3 +141,8 @@ func (s *Sandbox) OpenCodeChat(ctx context.Context, content string,
 	opts ...desktop.Option) (*commands.Stream[opencode.Message], error) {
 	return s.desktop.OpenCodeChat(ctx, content, opts...)
 }
+
+func (s *Sandbox) OpenCodeChatWithACPStream(ctx context.Context, content string,
+	opts ...desktop.Option) (*commands.Stream[[]acp.Event], error) {
+	return s.desktop.OpenCodeChatWithACPStream(ctx, content, opts...)
+}
