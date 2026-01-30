@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"github.com/llm-infra/acp/sdk/go/acp"
 	"github.com/llm-infra/secvirt/sdk-go/desktop/opencode"
 	"github.com/llm-infra/secvirt/sdk-go/sandbox/commands"
 )
@@ -106,4 +107,25 @@ func (s *Sandbox) OpenCodeChat(ctx context.Context, content string,
 	}
 
 	return commands.NewStream(ctx, handle, opencode.NewDecoder()), nil
+}
+
+func (s *Sandbox) OpenCodeChatWithACPStream(ctx context.Context, content string,
+	opts ...Option) (*commands.Stream[[]acp.Event], error) {
+	opt := NewOptions(s)
+	for _, o := range opts {
+		o(opt)
+	}
+
+	handle, err := s.Cmd().Start(ctx,
+		fmt.Sprintf("opencode run %s --format json",
+			strconv.Quote(content)),
+		opt.envs,
+		opt.cwd,
+		opt.stdin,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return commands.NewStream(ctx, handle, opencode.NewACPDecoder()), nil
 }

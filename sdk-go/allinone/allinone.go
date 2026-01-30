@@ -82,7 +82,7 @@ func (s *Sandbox) SetClaudeSettings(ctx context.Context, settings *claude.Settin
 	return s.desktop.SetClaudeSettings(ctx, settings, opts...)
 }
 
-func (s *Sandbox) SetSkills(ctx context.Context, skills []desktop.Skill,
+func (s *Sandbox) SetClaudeSkills(ctx context.Context, skills []desktop.Skill,
 	opts ...desktop.Option) error {
 	return s.desktop.SetClaudeSkills(ctx, skills, opts...)
 }
