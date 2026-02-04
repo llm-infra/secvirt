@@ -15,6 +15,7 @@ import (
 	"github.com/llm-infra/secvirt/sdk-go/sandbox"
 	"github.com/llm-infra/secvirt/sdk-go/sandbox/commands"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+	oc "github.com/sst/opencode-sdk-go"
 )
 
 type Sandbox struct {
@@ -137,12 +138,20 @@ func (s *Sandbox) SetOpenCodeAgents(ctx context.Context, agents map[string]io.Re
 	return s.desktop.SetOpenCodeAgents(ctx, agents, opts...)
 }
 
-func (s *Sandbox) OpenCodeChat(ctx context.Context, content string,
-	opts ...desktop.Option) (*commands.Stream[opencode.Message], error) {
-	return s.desktop.OpenCodeChat(ctx, content, opts...)
+func (s *Sandbox) RunOcServer(ctx context.Context, port int,
+	opts ...desktop.Option) error {
+	return s.desktop.RunOcServer(ctx, port, opts...)
 }
 
-func (s *Sandbox) OpenCodeChatWithACPStream(ctx context.Context, content string,
-	opts ...desktop.Option) (*commands.Stream[[]acp.Event], error) {
-	return s.desktop.OpenCodeChatWithACPStream(ctx, content, opts...)
+func (s *Sandbox) CloseOcServer() error {
+	return s.desktop.CloseOcServer()
+}
+
+func (s *Sandbox) OcClient() *oc.Client {
+	return s.desktop.OcClient()
+}
+
+func (s *Sandbox) OpenCodeChat(ctx context.Context, content string,
+	opts ...desktop.Option) (*desktop.OpenCodeStream, error) {
+	return s.desktop.OpenCodeChat(ctx, content, opts...)
 }

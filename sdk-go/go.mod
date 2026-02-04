@@ -17,6 +17,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.63.0
 	google.golang.org/protobuf v1.36.10
+	mvdan.cc/xurls/v2 v2.6.0
 )
 
 require (

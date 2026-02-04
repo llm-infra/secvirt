@@ -32,9 +32,9 @@ func NewStream[T any](ctx context.Context, handle *CommandHandle, decoder Decode
 	go func() {
 		_, err := s.handle.Wait(ctx,
 			WithStdout(
-				func(data []byte) {
-					if json.Valid(data) {
-						s.events <- data
+				func(b []byte) {
+					if json.Valid(b) {
+						s.events <- b
 					}
 				},
 			),

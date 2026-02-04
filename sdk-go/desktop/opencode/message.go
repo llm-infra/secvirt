@@ -1,26 +1,16 @@
 package opencode
 
-import (
-	"encoding/json"
-
-	"github.com/sst/opencode-sdk-go"
+const (
+	ToolBash  = "bash"
+	ToolWrite = "write"
 )
 
-type Message struct {
-	Type      string        `json:"type"`
-	Timestamp int64         `json:"timestamp"`
-	SessionID string        `json:"sessionID"`
-	Part      opencode.Part `json:"part"`
+type BashArgs struct {
+	Command     string `json:"command" mapstructure:"command"`
+	Description string `json:"description" mapstructure:"description"`
 }
 
-type Decoder struct{}
-
-func NewDecoder() *Decoder {
-	return &Decoder{}
-}
-
-func (d *Decoder) Decode(data []byte) (Message, error) {
-	var evt Message
-	err := json.Unmarshal(data, &evt)
-	return evt, err
+type WriteArgs struct {
+	FilePath string `json:"filePath" mapstructure:"filePath"`
+	Content  string `json:"content" mapstructure:"content"`
 }
