@@ -54,7 +54,7 @@ func TestOpenCodeChat(t *testing.T) {
 
 	}
 
-	stream, err := sbx.OpenCodeChat(t.Context(), "你好")
+	stream, err := sbx.OpenCodeStreamChat(t.Context(), "你好")
 	if !assert.NoError(t, err) {
 		return
 	}

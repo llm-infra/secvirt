@@ -152,6 +152,11 @@ func (s *Sandbox) OcClient() *oc.Client {
 }
 
 func (s *Sandbox) OpenCodeChat(ctx context.Context, content string,
-	opts ...desktop.Option) (*desktop.OpenCodeStream, error) {
+	opts ...desktop.Option) (*oc.SessionPromptResponse, error) {
 	return s.desktop.OpenCodeChat(ctx, content, opts...)
+}
+
+func (s *Sandbox) OpenCodeStreamChat(ctx context.Context, content string,
+	opts ...desktop.Option) (*desktop.OpenCodeStream, error) {
+	return s.desktop.OpenCodeStreamChat(ctx, content, opts...)
 }

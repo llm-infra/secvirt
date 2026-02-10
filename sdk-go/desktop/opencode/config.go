@@ -4,7 +4,7 @@ type Config struct {
 	Schema   string              `json:"$schema"`
 	Model    string              `json:"model"`
 	Provider map[string]Provider `json:"provider"`
-	Mcp      map[string]Mcp      `json:"mcp"`
+	Mcp      map[string]Mcp      `json:"mcp,omitempty"`
 }
 
 type Provider struct {

@@ -183,6 +183,47 @@ func (s *Sandbox) OcClient() *oc.Client {
 }
 
 func (s *Sandbox) OpenCodeChat(ctx context.Context, content string,
+	opts ...Option) (*oc.SessionPromptResponse, error) {
+	if s.ocClient == nil {
+		return nil, errors.New("opencode server not started")
+	}
+
+	opt := NewOptions(s)
+	for _, o := range opts {
+		o(opt)
+	}
+
+	var session *oc.Session
+	var err error
+	if len(opt.sessionID) > 0 {
+		session, err = s.ocClient.Session.Get(ctx, opt.sessionID, oc.SessionGetParams{})
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		session, err = s.ocClient.Session.New(ctx, oc.SessionNewParams{})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// 发送消息
+	params := oc.SessionPromptParams{
+		Parts: oc.F([]oc.SessionPromptParamsPartUnion{
+			oc.SessionPromptParamsPart{
+				Type: oc.F(oc.SessionPromptParamsPartsTypeText),
+				Text: oc.F(content),
+			},
+		}),
+	}
+	if len(opt.agent) > 0 {
+		params.Agent = oc.F(opt.agent)
+	}
+
+	return s.ocClient.Session.Prompt(ctx, session.ID, params)
+}
+
+func (s *Sandbox) OpenCodeStreamChat(ctx context.Context, content string,
 	opts ...Option) (*OpenCodeStream, error) {
 	if s.ocClient == nil {
 		return nil, errors.New("opencode server not started")
