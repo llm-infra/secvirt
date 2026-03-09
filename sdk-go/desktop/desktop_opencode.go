@@ -60,14 +60,32 @@ func (s *Sandbox) SetOpenCodeSkills(ctx context.Context, skills map[string]io.Re
 			return err
 		}
 
-		_, err = s.Cmd().Run(ctx,
-			fmt.Sprintf("unzip -o %s && rm -rf %s", temp, temp),
-			nil,
-			skillPath,
-			false,
-		)
+		skillName, has, err := checkZipRootDir(ctx, name, data)
 		if err != nil {
 			return err
+		}
+
+		if has {
+			_, err = s.Cmd().Run(ctx,
+				fmt.Sprintf("unzip -o %s && rm -rf %s", temp, temp),
+				nil,
+				skillPath,
+				false,
+			)
+			if err != nil {
+				return err
+			}
+		} else {
+			_, err = s.Cmd().Run(ctx,
+				fmt.Sprintf("unzip -o %s -d %s && rm -rf %s",
+					temp, filepath.Join(skillName, skillName), temp),
+				nil,
+				skillPath,
+				false,
+			)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
