@@ -9,7 +9,7 @@ require (
 	github.com/go-resty/resty/v2 v2.16.5
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
-	github.com/llm-infra/acp/sdk/go v0.0.0-20251217030730-ff6d3724b688
+	github.com/llm-infra/acp/sdk/go v0.0.0-20260310021154-d8fb83c79325
 	github.com/mel2oo/go-dkit v0.0.0-20251219074814-ca1a4ac7f68b
 	github.com/mholt/archiver/v4 v4.0.0-alpha.8
 	github.com/modelcontextprotocol/go-sdk v1.0.0
