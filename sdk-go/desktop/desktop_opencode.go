@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/llm-infra/secvirt/sdk-go/desktop/opencode"
 	"github.com/llm-infra/secvirt/sdk-go/sandbox/commands"
@@ -120,6 +121,9 @@ func (s *Sandbox) SetOpenCodeAgents(ctx context.Context, agents map[string]io.Re
 }
 
 func (s *Sandbox) RunOcServer(ctx context.Context, port int, opts ...Option) (err error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*30)
+	defer cancel()
+
 	opt := NewOptions(s)
 	for _, o := range opts {
 		o(opt)
@@ -136,7 +140,7 @@ func (s *Sandbox) RunOcServer(ctx context.Context, port int, opts ...Option) (er
 	}
 
 	urlCh := make(chan *url.URL)
-	errCh := make(chan error)
+	// errCh := make(chan error)
 
 	go func() {
 		rxStrict := xurls.Strict()
@@ -154,11 +158,11 @@ func (s *Sandbox) RunOcServer(ctx context.Context, port int, opts ...Option) (er
 					}
 				},
 			),
-			commands.WithStderr(
-				func(b []byte) {
-					errCh <- errors.New(string(b))
-				},
-			),
+			// commands.WithStderr(
+			// 	func(b []byte) {
+			// 		errCh <- errors.New(string(b))
+			// 	},
+			// ),
 		)
 	}()
 
@@ -166,8 +170,8 @@ func (s *Sandbox) RunOcServer(ctx context.Context, port int, opts ...Option) (er
 	case <-ctx.Done():
 		return ctx.Err()
 
-	case err = <-errCh:
-		return err
+	// case err = <-errCh:
+	// 	return err
 
 	case url := <-urlCh:
 		port, err := strconv.Atoi(url.Port())
