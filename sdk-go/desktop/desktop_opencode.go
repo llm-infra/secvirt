@@ -23,6 +23,19 @@ import (
 	"mvdan.cc/xurls/v2"
 )
 
+type ocServerAttemptError struct {
+	err       error
+	retryable bool
+}
+
+func (e *ocServerAttemptError) Error() string {
+	return e.err.Error()
+}
+
+func (e *ocServerAttemptError) Unwrap() error {
+	return e.err
+}
+
 // model provider mcp
 func (s *Sandbox) SetOpenCodeConfig(ctx context.Context, config *opencode.Config,
 	opts ...Option) error {
@@ -129,7 +142,53 @@ func (s *Sandbox) RunOcServer(ctx context.Context, port int, opts ...Option) (er
 		o(opt)
 	}
 
-	s.ocHandle, err = s.Cmd().Start(ctx,
+	return runOcServerWithRetry(ctx, opt.ocServerRetries, opt.ocServerRetryWait,
+		func() error {
+			return s.runOcServerOnce(ctx, port, opt)
+		},
+		s.CloseOcServer,
+	)
+}
+
+func runOcServerWithRetry(ctx context.Context, retries int, wait time.Duration,
+	run func() error, cleanup func() error) error {
+	for attempt := 0; attempt <= retries; attempt++ {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+
+		err := run()
+		if err == nil {
+			return nil
+		}
+
+		var attemptErr *ocServerAttemptError
+		if !errors.As(err, &attemptErr) || !attemptErr.retryable || attempt == retries {
+			return err
+		}
+
+		if cleanup != nil {
+			if cleanupErr := cleanup(); cleanupErr != nil {
+				return errors.Join(err, cleanupErr)
+			}
+		}
+
+		timer := time.NewTimer(wait)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return ctx.Err()
+		case <-timer.C:
+		}
+	}
+
+	return nil
+}
+
+func (s *Sandbox) runOcServerOnce(ctx context.Context, port int, opt *Options) error {
+	s.ocClient = nil
+
+	handle, err := s.Cmd().Start(ctx,
 		fmt.Sprintf("opencode serve --hostname 0.0.0.0 --port %d", port),
 		opt.envs,
 		opt.cwd,
@@ -138,14 +197,24 @@ func (s *Sandbox) RunOcServer(ctx context.Context, port int, opts ...Option) (er
 	if err != nil {
 		return err
 	}
+	s.ocHandle = handle
 
-	urlCh := make(chan *url.URL)
-	// errCh := make(chan error)
+	urlCh := make(chan *url.URL, 1)
+	errCh := make(chan error, 1)
 
 	go func() {
 		rxStrict := xurls.Strict()
+		sendErr := func(err error) {
+			if err == nil {
+				return
+			}
+			select {
+			case errCh <- &ocServerAttemptError{err: err, retryable: true}:
+			default:
+			}
+		}
 
-		s.ocHandle.Wait(ctx,
+		_, waitErr := s.ocHandle.Wait(ctx,
 			commands.WithStdout(
 				func(b []byte) {
 					urlStr := rxStrict.Find(b)
@@ -154,24 +223,28 @@ func (s *Sandbox) RunOcServer(ctx context.Context, port int, opts ...Option) (er
 					}
 					url, err := url.Parse(string(urlStr))
 					if err == nil {
-						urlCh <- url
+						select {
+						case urlCh <- url:
+						default:
+						}
 					}
 				},
 			),
-			// commands.WithStderr(
-			// 	func(b []byte) {
-			// 		errCh <- errors.New(string(b))
-			// 	},
-			// ),
+			commands.WithStderr(
+				func(b []byte) {
+					sendErr(errors.New(string(b)))
+				},
+			),
 		)
+		sendErr(waitErr)
 	}()
 
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
 
-	// case err = <-errCh:
-	// 	return err
+	case err := <-errCh:
+		return err
 
 	case url := <-urlCh:
 		port, err := strconv.Atoi(url.Port())
@@ -193,14 +266,18 @@ func (s *Sandbox) RunOcServer(ctx context.Context, port int, opts ...Option) (er
 			oco.WithBaseURL(s.ProxyBaseURL()),
 			oco.WithHTTPClient(&http.Client{Transport: tr}),
 		)
-		return err
+		return nil
 	}
 }
 
 func (s *Sandbox) CloseOcServer() error {
 	if s.ocHandle != nil {
-		return s.ocHandle.Kill()
+		err := s.ocHandle.Kill()
+		s.ocHandle = nil
+		s.ocClient = nil
+		return err
 	}
+	s.ocClient = nil
 	return nil
 }
 
