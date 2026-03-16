@@ -134,9 +134,6 @@ func (s *Sandbox) SetOpenCodeAgents(ctx context.Context, agents map[string]io.Re
 }
 
 func (s *Sandbox) RunOcServer(ctx context.Context, port int, opts ...Option) (err error) {
-	ctx, cancel := context.WithTimeout(ctx, time.Second*30)
-	defer cancel()
-
 	opt := NewOptions(s)
 	for _, o := range opts {
 		o(opt)
@@ -186,6 +183,9 @@ func runOcServerWithRetry(ctx context.Context, retries int, wait time.Duration,
 }
 
 func (s *Sandbox) runOcServerOnce(ctx context.Context, port int, opt *Options) error {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
+	defer cancel()
+
 	s.ocClient = nil
 
 	handle, err := s.Cmd().Start(ctx,
