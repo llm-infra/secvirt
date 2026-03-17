@@ -71,3 +71,35 @@ func TestRunOcServerWithRetry_StopsWhenContextCancelled(t *testing.T) {
 	assert.ErrorIs(t, err, context.Canceled)
 	assert.Equal(t, 1, attempts)
 }
+
+func TestOcServerRunContextErr_InternalTimeoutIsRetryable(t *testing.T) {
+	t.Parallel()
+
+	parentCtx := context.Background()
+	runCtx, cancel := context.WithDeadline(parentCtx, time.Now().Add(-time.Second))
+	defer cancel()
+
+	err := ocServerRunContextErr(parentCtx, runCtx)
+
+	var attemptErr *ocServerAttemptError
+	assert.ErrorAs(t, err, &attemptErr)
+	assert.True(t, attemptErr.retryable)
+	assert.ErrorIs(t, err, context.DeadlineExceeded)
+}
+
+func TestOcServerRunContextErr_ParentCancellationStopsRetry(t *testing.T) {
+	t.Parallel()
+
+	parentCtx, cancel := context.WithCancel(context.Background())
+	runCtx, runCancel := context.WithTimeout(parentCtx, time.Second)
+	cancel()
+	defer runCancel()
+
+	<-runCtx.Done()
+
+	err := ocServerRunContextErr(parentCtx, runCtx)
+
+	var attemptErr *ocServerAttemptError
+	assert.False(t, errors.As(err, &attemptErr))
+	assert.ErrorIs(t, err, context.Canceled)
+}

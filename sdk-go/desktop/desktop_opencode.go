@@ -182,8 +182,22 @@ func runOcServerWithRetry(ctx context.Context, retries int, wait time.Duration,
 	return nil
 }
 
+func ocServerRunContextErr(parentCtx, runCtx context.Context) error {
+	if err := parentCtx.Err(); err != nil {
+		return err
+	}
+
+	err := runCtx.Err()
+	if errors.Is(err, context.DeadlineExceeded) {
+		return &ocServerAttemptError{err: err, retryable: true}
+	}
+
+	return err
+}
+
 func (s *Sandbox) runOcServerOnce(ctx context.Context, port int, opt *Options) error {
-	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
+	parentCtx := ctx
+	ctx, cancel := context.WithTimeout(parentCtx, time.Second*10)
 	defer cancel()
 
 	s.ocClient = nil
@@ -241,7 +255,7 @@ func (s *Sandbox) runOcServerOnce(ctx context.Context, port int, opt *Options) e
 
 	select {
 	case <-ctx.Done():
-		return ctx.Err()
+		return ocServerRunContextErr(parentCtx, ctx)
 
 	case err := <-errCh:
 		return err
