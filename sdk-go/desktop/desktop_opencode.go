@@ -165,9 +165,7 @@ func runOcServerWithRetry(ctx context.Context, retries int, wait time.Duration,
 		}
 
 		if cleanup != nil {
-			if cleanupErr := cleanup(); cleanupErr != nil {
-				return errors.Join(err, cleanupErr)
-			}
+			cleanup()
 		}
 
 		timer := time.NewTimer(wait)
@@ -180,19 +178,6 @@ func runOcServerWithRetry(ctx context.Context, retries int, wait time.Duration,
 	}
 
 	return nil
-}
-
-func ocServerRunContextErr(parentCtx, runCtx context.Context) error {
-	if err := parentCtx.Err(); err != nil {
-		return err
-	}
-
-	err := runCtx.Err()
-	if errors.Is(err, context.DeadlineExceeded) {
-		return &ocServerAttemptError{err: err, retryable: true}
-	}
-
-	return err
 }
 
 func (s *Sandbox) runOcServerOnce(ctx context.Context, port int, opt *Options) error {
@@ -209,7 +194,7 @@ func (s *Sandbox) runOcServerOnce(ctx context.Context, port int, opt *Options) e
 		opt.stdin,
 	)
 	if err != nil {
-		return err
+		return &ocServerAttemptError{err: err, retryable: true}
 	}
 	s.ocHandle = handle
 
@@ -255,7 +240,16 @@ func (s *Sandbox) runOcServerOnce(ctx context.Context, port int, opt *Options) e
 
 	select {
 	case <-ctx.Done():
-		return ocServerRunContextErr(parentCtx, ctx)
+		if err := parentCtx.Err(); err != nil {
+			return err
+		}
+
+		err := ctx.Err()
+		if errors.Is(err, context.DeadlineExceeded) {
+			return &ocServerAttemptError{err: err, retryable: true}
+		}
+
+		return err
 
 	case err := <-errCh:
 		return err

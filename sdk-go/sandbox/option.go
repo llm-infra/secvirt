@@ -25,7 +25,7 @@ func newOptions() *Options {
 	return &Options{
 		host:      "localhost",
 		user:      "default",
-		template:  "codeide:latest",
+		template:  "allinone",
 		apiPort:   defaultAPIPort,
 		proxyPort: defaultProxyPort,
 	}
