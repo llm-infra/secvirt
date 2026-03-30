@@ -1,6 +1,8 @@
 package desktop
 
-import "time"
+import (
+	"time"
+)
 
 type Option func(*Options)
 
@@ -14,9 +16,21 @@ type Options struct {
 	ocServerRetryWait time.Duration
 }
 
-func NewOptions(s *Sandbox) *Options {
+func (o *Options) Cwd() string {
+	return o.cwd
+}
+
+func (o *Options) Envs() map[string]string {
+	return o.envs
+}
+
+func (o *Options) Stdin() bool {
+	return o.stdin
+}
+
+func NewOptions(cwd string) *Options {
 	return &Options{
-		cwd:               s.HomeDir(),
+		cwd:               cwd,
 		envs:              make(map[string]string),
 		ocServerRetries:   3,
 		ocServerRetryWait: time.Second,

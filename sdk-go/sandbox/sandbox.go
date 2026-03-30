@@ -22,6 +22,9 @@ type Sandbox struct {
 	fs    *filesystem.Filesystem
 	cmd   *commands.Cmd
 	pty   *commands.Pty
+
+	ProxyHost string
+	ProxyPort int
 }
 
 func NewSandbox(ctx context.Context, opts ...Option) (*Sandbox, error) {
@@ -69,8 +72,10 @@ func NewSandbox(ctx context.Context, opts ...Option) (*Sandbox, error) {
 	)
 
 	sbx := &Sandbox{
-		api:   apiClient,
-		proxy: prxClient,
+		api:       apiClient,
+		proxy:     prxClient,
+		ProxyHost: opt.host,
+		ProxyPort: opt.proxyPort,
 	}
 
 	res, err := sbx._createSandbox(

@@ -23,6 +23,8 @@ type Sandbox struct {
 	codeide *codeide.Sandbox
 	hostmcp *hostmcp.Sandbox
 	desktop *desktop.Sandbox
+
+	claw Claw
 }
 
 func NewSandbox(ctx context.Context, opts ...sandbox.Option) (*Sandbox, error) {

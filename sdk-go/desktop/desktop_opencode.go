@@ -39,7 +39,7 @@ func (e *ocServerAttemptError) Unwrap() error {
 // model provider mcp
 func (s *Sandbox) SetOpenCodeConfig(ctx context.Context, config *opencode.Config,
 	opts ...Option) error {
-	opt := NewOptions(s)
+	opt := NewOptions(s.HomeDir())
 	for _, o := range opts {
 		o(opt)
 	}
@@ -57,7 +57,7 @@ func (s *Sandbox) SetOpenCodeConfig(ctx context.Context, config *opencode.Config
 
 func (s *Sandbox) SetOpenCodeSkills(ctx context.Context, skills map[string]io.Reader,
 	opts ...Option) error {
-	opt := NewOptions(s)
+	opt := NewOptions(s.HomeDir())
 	for _, o := range opts {
 		o(opt)
 	}
@@ -112,7 +112,7 @@ func (s *Sandbox) SetOpenCodeSkills(ctx context.Context, skills map[string]io.Re
 
 func (s *Sandbox) SetOpenCodeAgents(ctx context.Context, agents map[string]io.Reader,
 	opts ...Option) error {
-	opt := NewOptions(s)
+	opt := NewOptions(s.HomeDir())
 	for _, o := range opts {
 		o(opt)
 	}
@@ -134,7 +134,7 @@ func (s *Sandbox) SetOpenCodeAgents(ctx context.Context, agents map[string]io.Re
 }
 
 func (s *Sandbox) RunOcServer(ctx context.Context, port int, opts ...Option) (err error) {
-	opt := NewOptions(s)
+	opt := NewOptions(s.HomeDir())
 	for _, o := range opts {
 		o(opt)
 	}
@@ -299,7 +299,7 @@ func (s *Sandbox) OpenCodeChat(ctx context.Context, content string,
 		return nil, errors.New("opencode server not started")
 	}
 
-	opt := NewOptions(s)
+	opt := NewOptions(s.HomeDir())
 	for _, o := range opts {
 		o(opt)
 	}
@@ -340,7 +340,7 @@ func (s *Sandbox) OpenCodeStreamChat(ctx context.Context, content string,
 		return nil, errors.New("opencode server not started")
 	}
 
-	opt := NewOptions(s)
+	opt := NewOptions(s.HomeDir())
 	for _, o := range opts {
 		o(opt)
 	}

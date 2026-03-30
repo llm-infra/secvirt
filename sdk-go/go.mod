@@ -5,6 +5,7 @@ go 1.24.4
 require (
 	connectrpc.com/connect v1.18.1
 	github.com/BurntSushi/toml v1.6.0
+	github.com/a3tai/openclaw-go v0.0.0-20260324171739-1730cafa02ac
 	github.com/dubonzi/otelresty v1.6.0
 	github.com/go-resty/resty/v2 v2.16.5
 	github.com/google/uuid v1.6.0
@@ -47,6 +48,7 @@ require (
 	github.com/goccy/go-yaml v1.19.0 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/jsonschema-go v0.3.0 // indirect
+	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.1 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
@@ -97,3 +99,5 @@ require (
 	google.golang.org/grpc v1.73.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/a3tai/openclaw-go => github.com/mel2oo/openclaw-go v0.0.0-20260325073128-691d734a0b52

@@ -13,7 +13,7 @@ import (
 
 func (s *Sandbox) SetClaudeSettings(ctx context.Context, settings *claude.Settings,
 	opts ...Option) error {
-	opt := NewOptions(s)
+	opt := NewOptions(s.HomeDir())
 	for _, o := range opts {
 		o(opt)
 	}
@@ -47,7 +47,7 @@ type SkillFile struct {
 
 func (s *Sandbox) SetClaudeSkills(ctx context.Context, skills []Skill,
 	opts ...Option) error {
-	opt := NewOptions(s)
+	opt := NewOptions(s.HomeDir())
 	for _, o := range opts {
 		o(opt)
 	}
@@ -66,7 +66,7 @@ func (s *Sandbox) SetClaudeSkills(ctx context.Context, skills []Skill,
 
 func (s *Sandbox) ClaudeChat(ctx context.Context, content string,
 	opts ...Option) (*commands.Stream[[]claude.Message], error) {
-	opt := NewOptions(s)
+	opt := NewOptions(s.HomeDir())
 	for _, o := range opts {
 		o(opt)
 	}

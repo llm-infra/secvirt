@@ -14,7 +14,7 @@ import (
 
 func (s *Sandbox) SetGeminiConfig(ctx context.Context, config gemini.Config,
 	opts ...Option) error {
-	opt := NewOptions(s)
+	opt := NewOptions(s.HomeDir())
 	for _, o := range opts {
 		o(opt)
 	}
@@ -32,7 +32,7 @@ func (s *Sandbox) SetGeminiConfig(ctx context.Context, config gemini.Config,
 
 func (s *Sandbox) GeminiChat(ctx context.Context, content string,
 	opts ...Option) (*commands.Stream[gemini.Message], error) {
-	opt := NewOptions(s)
+	opt := NewOptions(s.HomeDir())
 	for _, o := range opts {
 		o(opt)
 	}
@@ -53,7 +53,7 @@ func (s *Sandbox) GeminiChat(ctx context.Context, content string,
 
 func (s *Sandbox) GeminiChatWithACPStream(ctx context.Context, content string,
 	opts ...Option) (*commands.Stream[[]acp.Event], error) {
-	opt := NewOptions(s)
+	opt := NewOptions(s.HomeDir())
 	for _, o := range opts {
 		o(opt)
 	}

@@ -14,7 +14,7 @@ import (
 
 func (s *Sandbox) SetCodexConfig(ctx context.Context, config *codex.Config,
 	opts ...Option) error {
-	opt := NewOptions(s)
+	opt := NewOptions(s.HomeDir())
 	for _, o := range opts {
 		o(opt)
 	}
@@ -32,7 +32,7 @@ func (s *Sandbox) SetCodexConfig(ctx context.Context, config *codex.Config,
 
 func (s *Sandbox) CodexChat(ctx context.Context, content string,
 	opts ...Option) (*commands.Stream[codex.Message], error) {
-	opt := NewOptions(s)
+	opt := NewOptions(s.HomeDir())
 	for _, o := range opts {
 		o(opt)
 	}
@@ -53,7 +53,7 @@ func (s *Sandbox) CodexChat(ctx context.Context, content string,
 
 func (s *Sandbox) CodexChatWithACPStream(ctx context.Context, content string,
 	opts ...Option) (*commands.Stream[[]acp.Event], error) {
-	opt := NewOptions(s)
+	opt := NewOptions(s.HomeDir())
 	for _, o := range opts {
 		o(opt)
 	}
