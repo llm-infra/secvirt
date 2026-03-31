@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"path/filepath"
-	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -35,6 +34,11 @@ const (
 
 var ErrOpenClawNotRunning = errors.New("openclaw is not running")
 
+const (
+	openClawMaxAttempts = 3
+	openClawRetryDelay  = 200 * time.Millisecond
+)
+
 type Claw struct {
 	port           int
 	token          string
@@ -43,7 +47,7 @@ type Claw struct {
 	clientInfo     protocol.ClientInfo
 	scopes         []protocol.Scope
 
-	pids []uint32
+	pid int
 }
 
 func (s *Sandbox) InitOpenClaw(ctx context.Context, opts ...desktop.Option) error {
@@ -80,10 +84,7 @@ func (s *Sandbox) InitOpenClaw(ctx context.Context, opts ...desktop.Option) erro
 	// 通过进程名检查OpenClaw是否已经在运行
 	// 如果已经运行了，初始化handle、client、chatClient
 	ok, err := s.attachOpenClawIfRunning(ctx)
-	if err != nil {
-		return err
-	}
-	if !ok {
+	if err != nil || !ok {
 		return s.RestartOpenClaw(ctx, opts...)
 	}
 	return nil
@@ -95,9 +96,9 @@ func (s *Sandbox) RestartOpenClaw(ctx context.Context, opts ...desktop.Option) e
 		o(opt)
 	}
 
-	if len(s.claw.pids) != 0 {
-		s.Cmd().Run(ctx, fmt.Sprintf("kill -9 %s", joinPIDs(s.claw.pids)), nil, "", false)
-		s.claw.pids = nil
+	if s.claw.pid != 0 {
+		s.Cmd().Run(ctx, fmt.Sprintf("kill -9 %d", s.claw.pid), nil, "", false)
+		s.claw.pid = 0
 	}
 
 	handle, err := s.Cmd().Start(ctx,
@@ -149,25 +150,10 @@ func (s *Sandbox) RestartOpenClaw(ctx context.Context, opts ...desktop.Option) e
 	return ErrOpenClawNotRunning
 }
 
-func (s *Sandbox) ReloadOpenClaw(ctx context.Context, opts ...desktop.Option) error {
-	if len(s.claw.pids) == 0 {
-		return ErrOpenClawNotRunning
-	}
-
-	_, err := s.Cmd().Run(ctx,
-		fmt.Sprintf("kill -USR1 %s", joinPIDs(s.claw.pids)),
-		nil, "", false,
-	)
-	if err != nil {
-		return s.RestartOpenClaw(ctx)
-	}
-	return nil
-}
-
 func (s *Sandbox) loadOpenClawRuntime(ctx context.Context) (*Claw, error) {
 	configDir := filepath.Join(s.HomeDir(), openClawUserDirName)
 
-	configData, err := s.Filesystem().Read(ctx, filepath.Join(configDir, openClawConfigFile))
+	configData, err := s.readOpenClawFile(ctx, filepath.Join(configDir, openClawConfigFile))
 	if err != nil {
 		return nil, fmt.Errorf("read sandbox openclaw config: %w", err)
 	}
@@ -177,12 +163,12 @@ func (s *Sandbox) loadOpenClawRuntime(ctx context.Context) (*Claw, error) {
 		return nil, err
 	}
 
-	deviceData, err := s.Filesystem().Read(ctx, filepath.Join(configDir, openClawDeviceFile))
+	deviceData, err := s.readOpenClawFile(ctx, filepath.Join(configDir, openClawDeviceFile))
 	if err != nil {
 		return nil, fmt.Errorf("read sandbox openclaw device identity: %w", err)
 	}
 
-	pairedData, err := s.Filesystem().Read(ctx, filepath.Join(configDir, openClawPairedFile))
+	pairedData, err := s.readOpenClawFile(ctx, filepath.Join(configDir, openClawPairedFile))
 	if err != nil {
 		return nil, fmt.Errorf("read sandbox openclaw paired devices: %w", err)
 	}
@@ -222,19 +208,16 @@ func (s *Sandbox) loadOpenClawRuntime(ctx context.Context) (*Claw, error) {
 }
 
 func (s *Sandbox) attachOpenClawIfRunning(ctx context.Context) (bool, error) {
-	pids, err := s.findOpenClawPIDs(ctx)
+	pid, err := s.findOpenClawPIDs(ctx)
 	if err != nil {
 		return false, err
 	}
-	if len(pids) == 0 {
-		return false, nil
-	}
 
-	s.claw.pids = pids
+	s.claw.pid = pid
 
 	client, err := s.ClawClient(ctx)
 	if err != nil {
-		s.claw.pids = nil
+		s.claw.pid = 0
 		return false, nil
 	}
 	defer client.Close()
@@ -242,50 +225,94 @@ func (s *Sandbox) attachOpenClawIfRunning(ctx context.Context) (bool, error) {
 	return true, nil
 }
 
-func (s *Sandbox) findOpenClawPIDs(ctx context.Context) ([]uint32, error) {
-	res, err := s.Cmd().Run(ctx, "pgrep -f openclaw", nil, "", false)
-	if err != nil {
-		if exitErr, ok := err.(*commands.CommandExitError); ok {
-			if len(exitErr.Result.Stdout) > 0 {
-				return parseOpenClawPIDs(exitErr.Result.Stdout)
+func (s *Sandbox) findOpenClawPIDs(ctx context.Context) (int, error) {
+	return retryFindOpenClawPID(ctx, func() (int, error) {
+		res, err := s.Cmd().Run(ctx, "pgrep -f openclaw-gateway", nil, "", false)
+		if err != nil {
+			if exitErr, ok := err.(*commands.CommandExitError); ok {
+				if len(exitErr.Result.Stdout) > 0 {
+					return strconv.Atoi(strings.TrimSpace(exitErr.Result.Stdout))
+				}
 			}
+			return 0, err
 		}
-		return nil, err
-	}
 
-	return parseOpenClawPIDs(res.Stdout)
+		return strconv.Atoi(strings.TrimSpace(res.Stdout))
+	})
 }
 
-func parseOpenClawPIDs(output string) ([]uint32, error) {
-	if strings.TrimSpace(output) == "" {
-		return nil, nil
-	}
+func (s *Sandbox) readOpenClawFile(ctx context.Context, path string) ([]byte, error) {
+	return retryOpenClawRead(ctx, func() ([]byte, error) {
+		return s.Filesystem().Read(ctx, path)
+	})
+}
 
-	lines := strings.Fields(output)
-	pidSet := make(map[uint32]struct{}, len(lines))
-	pids := make([]uint32, 0, len(lines))
-	for _, line := range lines {
-		pid, err := strconv.ParseUint(line, 10, 32)
+func retryOpenClawRead(ctx context.Context, read func() ([]byte, error)) ([]byte, error) {
+	var lastErr error
+	for attempt := 0; attempt < openClawMaxAttempts; attempt++ {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+
+		data, err := read()
 		if err == nil {
-			pid32 := uint32(pid)
-			if _, ok := pidSet[pid32]; ok {
-				continue
-			}
-			pidSet[pid32] = struct{}{}
-			pids = append(pids, pid32)
+			return data, nil
+		}
+		if !isRetryableOpenClawReadError(err) {
+			return nil, err
+		}
+		lastErr = err
+
+		timer := time.NewTimer(openClawRetryDelay)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return nil, ctx.Err()
+		case <-timer.C:
 		}
 	}
 
-	slices.Sort(pids)
-	return pids, nil
+	return nil, lastErr
 }
 
-func joinPIDs(pids []uint32) string {
-	parts := make([]string, 0, len(pids))
-	for _, pid := range pids {
-		parts = append(parts, strconv.FormatUint(uint64(pid), 10))
+func retryFindOpenClawPID(ctx context.Context, find func() (int, error)) (int, error) {
+	var lastErr error
+	for attempt := 0; attempt < openClawMaxAttempts; attempt++ {
+		if err := ctx.Err(); err != nil {
+			return 0, err
+		}
+
+		pid, err := find()
+		if err == nil {
+			return pid, nil
+		}
+		if !isRetryableOpenClawReadError(err) {
+			return 0, err
+		}
+
+		lastErr = err
+
+		timer := time.NewTimer(openClawRetryDelay)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return 0, ctx.Err()
+		case <-timer.C:
+		}
 	}
-	return strings.Join(parts, " ")
+
+	return 0, lastErr
+}
+
+func isRetryableOpenClawReadError(err error) bool {
+	if err == nil {
+		return false
+	}
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return false
+	}
+
+	return true
 }
 
 /*******************************/
@@ -521,24 +548,40 @@ func (s *Sandbox) SetModel(ctx context.Context, provider string, model openclaw.
 	})
 }
 
-// func (s *Sandbox) DeleteModel(ctx context.Context, provider string) error {
-// 	result, err := s.GetConfig(ctx)
-// 	if err != nil {
-// 		return err
-// 	}
+func (s *Sandbox) DeleteModel(ctx context.Context, provider string) error {
+	configDir := filepath.Join(s.HomeDir(), openClawUserDirName)
 
-// 	delete(result.Config.Models.Providers, provider)
-// 	return s.claw.client.ConfigPatch(ctx, protocol.ConfigPatchParams{
-// 		BaseHash: result.Hash,
-// 		Raw: json.MarshalString(
-// 			openclaw.Config{
-// 				Models: &openclaw.ModelsConfig{
-// 					Providers: result.Config.Models.Providers,
-// 				},
-// 			},
-// 		),
-// 	})
-// }
+	configData, err := s.readOpenClawFile(ctx,
+		filepath.Join(configDir, openClawConfigFile))
+	if err != nil {
+		return fmt.Errorf("read sandbox openclaw config: %w", err)
+	}
+
+	config := make(map[string]any)
+	if err := json.Unmarshal(configData, &config); err != nil {
+		return err
+	}
+
+	models, ok := config["models"].(map[string]any)
+	if ok {
+		providers, ok := models["providers"].(map[string]any)
+		if ok {
+			delete(providers, provider)
+		}
+	}
+
+	configData, err = json.Marshal(config)
+	if err != nil {
+		return err
+	}
+
+	if err := s.Filesystem().Write(ctx,
+		filepath.Join(configDir, openClawConfigFile), configData); err != nil {
+		return err
+	}
+
+	return nil
+}
 
 func (s *Sandbox) SetDefaultModel(ctx context.Context, modelRef openclaw.ModelRef) error {
 	client, err := s.ClawClient(ctx)
@@ -598,17 +641,6 @@ func (s *Sandbox) UpdateSkill(ctx context.Context, params protocol.SkillsUpdateP
 
 	return client.SkillsUpdate(ctx, params)
 }
-
-// func (s *Sandbox) InstallSkill(ctx context.Context, req protocol.SkillsInstallParams) (any, error) {
-// 	client, err := s.ClawClient(ctx)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("%w: %v", ErrOpenClawNotRunning, err)
-// 	}
-// 	defer client.Close()
-
-// 	return client.SkillsInstall(ctx, req)
-
-// }
 
 /*******************************/
 /*********** 频道管理 ***********/

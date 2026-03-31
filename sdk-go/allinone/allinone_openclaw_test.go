@@ -1,6 +1,7 @@
 package allinone
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"testing"
@@ -89,19 +90,60 @@ func TestInitOpenClaw(t *testing.T) {
 	fmt.Println(res)
 }
 
-func TestParseOpenClawPIDs(t *testing.T) {
-	pids, err := parseOpenClawPIDs("101\n202\n202\n303\n")
+func TestRetryOpenClawReadRetriesTransientEOF(t *testing.T) {
+	attempts := 0
+
+	data, err := retryOpenClawRead(t.Context(), func() ([]byte, error) {
+		attempts++
+		if attempts < 3 {
+			return nil, errors.New("protocol error: incomplete envelope: unexpected EOF")
+		}
+		return []byte("ok"), nil
+	})
+
 	require.NoError(t, err)
-	assert.Equal(t, []uint32{101, 202, 303}, pids)
+	assert.Equal(t, []byte("ok"), data)
+	assert.Equal(t, 3, attempts)
 }
 
-func TestParseOpenClawPIDsEmpty(t *testing.T) {
-	pids, err := parseOpenClawPIDs("")
-	require.NoError(t, err)
-	assert.Empty(t, pids)
+func TestRetryOpenClawReadStopsOnNonRetryableError(t *testing.T) {
+	attempts := 0
+	wantErr := errors.New("permission denied")
+
+	_, err := retryOpenClawRead(t.Context(), func() ([]byte, error) {
+		attempts++
+		return nil, wantErr
+	})
+
+	require.ErrorIs(t, err, wantErr)
+	assert.Equal(t, 1, attempts)
 }
 
-func TestParseOpenClawPIDsInvalid(t *testing.T) {
-	_, err := parseOpenClawPIDs("101\nabc\n")
-	require.Error(t, err)
+func TestRetryFindOpenClawPIDRetriesNotRunning(t *testing.T) {
+	attempts := 0
+
+	pid, err := retryFindOpenClawPID(t.Context(), func() (int, error) {
+		attempts++
+		if attempts < 3 {
+			return 0, ErrOpenClawNotRunning
+		}
+		return 1234, nil
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, 1234, pid)
+	assert.Equal(t, 3, attempts)
+}
+
+func TestRetryFindOpenClawPIDStopsOnNonRetryableError(t *testing.T) {
+	attempts := 0
+	wantErr := errors.New("command failed")
+
+	_, err := retryFindOpenClawPID(t.Context(), func() (int, error) {
+		attempts++
+		return 0, wantErr
+	})
+
+	require.ErrorIs(t, err, wantErr)
+	assert.Equal(t, 1, attempts)
 }
