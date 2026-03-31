@@ -10,6 +10,7 @@ import (
 	"github.com/llm-infra/secvirt/sdk-go/sandbox"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestOpenClawSessionMethodSignatures(t *testing.T) {
@@ -86,4 +87,21 @@ func TestInitOpenClaw(t *testing.T) {
 		},
 	})
 	fmt.Println(res)
+}
+
+func TestParseOpenClawPIDs(t *testing.T) {
+	pids, err := parseOpenClawPIDs("101\n202\n202\n303\n")
+	require.NoError(t, err)
+	assert.Equal(t, []uint32{101, 202, 303}, pids)
+}
+
+func TestParseOpenClawPIDsEmpty(t *testing.T) {
+	pids, err := parseOpenClawPIDs("")
+	require.NoError(t, err)
+	assert.Empty(t, pids)
+}
+
+func TestParseOpenClawPIDsInvalid(t *testing.T) {
+	_, err := parseOpenClawPIDs("101\nabc\n")
+	require.Error(t, err)
 }

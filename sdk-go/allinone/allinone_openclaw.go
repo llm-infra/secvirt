@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"net/http"
 	"path/filepath"
-	"regexp"
+	"slices"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -41,7 +43,7 @@ type Claw struct {
 	clientInfo     protocol.ClientInfo
 	scopes         []protocol.Scope
 
-	pid uint32
+	pids []uint32
 }
 
 func (s *Sandbox) InitOpenClaw(ctx context.Context, opts ...desktop.Option) error {
@@ -75,7 +77,7 @@ func (s *Sandbox) InitOpenClaw(ctx context.Context, opts ...desktop.Option) erro
 	}
 	s.claw = *claw
 
-	// 通过端口检查OpenClaw是否已经在运行
+	// 通过进程名检查OpenClaw是否已经在运行
 	// 如果已经运行了，初始化handle、client、chatClient
 	ok, err := s.attachOpenClawIfRunning(ctx)
 	if err != nil {
@@ -93,9 +95,9 @@ func (s *Sandbox) RestartOpenClaw(ctx context.Context, opts ...desktop.Option) e
 		o(opt)
 	}
 
-	if s.claw.pid != 0 {
-		s.Cmd().Run(ctx, fmt.Sprintf("kill -9 %d", s.claw.pid), nil, "", false)
-		s.claw.pid = 0
+	if len(s.claw.pids) != 0 {
+		s.Cmd().Run(ctx, fmt.Sprintf("kill -9 %s", joinPIDs(s.claw.pids)), nil, "", false)
+		s.claw.pids = nil
 	}
 
 	handle, err := s.Cmd().Start(ctx,
@@ -130,29 +132,30 @@ func (s *Sandbox) RestartOpenClaw(ctx context.Context, opts ...desktop.Option) e
 	}(handle.Pid())
 
 	<-success
-	for {
+	for i := 0; i < 10; i++ {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		default:
-			client, err := s.ClawClient(ctx)
+			_, err := s.attachOpenClawIfRunning(ctx)
 			if err != nil {
 				time.Sleep(time.Second)
 				continue
 			}
-			defer client.Close()
 			return nil
 		}
 	}
+
+	return ErrOpenClawNotRunning
 }
 
 func (s *Sandbox) ReloadOpenClaw(ctx context.Context, opts ...desktop.Option) error {
-	if s.claw.pid == 0 {
+	if len(s.claw.pids) == 0 {
 		return ErrOpenClawNotRunning
 	}
 
 	_, err := s.Cmd().Run(ctx,
-		fmt.Sprintf("kill -USR1 %d", s.claw.pid),
+		fmt.Sprintf("kill -USR1 %s", joinPIDs(s.claw.pids)),
 		nil, "", false,
 	)
 	if err != nil {
@@ -219,15 +222,19 @@ func (s *Sandbox) loadOpenClawRuntime(ctx context.Context) (*Claw, error) {
 }
 
 func (s *Sandbox) attachOpenClawIfRunning(ctx context.Context) (bool, error) {
-	pid, ok, _ := s.findListeningPID(ctx, s.claw.port)
-	if !ok {
+	pids, err := s.findOpenClawPIDs(ctx)
+	if err != nil {
+		return false, err
+	}
+	if len(pids) == 0 {
 		return false, nil
 	}
 
-	s.claw.pid = pid
+	s.claw.pids = pids
 
 	client, err := s.ClawClient(ctx)
 	if err != nil {
+		s.claw.pids = nil
 		return false, nil
 	}
 	defer client.Close()
@@ -235,27 +242,50 @@ func (s *Sandbox) attachOpenClawIfRunning(ctx context.Context) (bool, error) {
 	return true, nil
 }
 
-func (s *Sandbox) findListeningPID(ctx context.Context, port int) (uint32, bool, error) {
-	var listeningPIDPattern = regexp.MustCompile(`pid=(\d+)`)
-
-	res, err := s.Cmd().Run(ctx,
-		fmt.Sprintf("ss -ltnp 'sport = :%d'", port),
-		nil, "", false,
-	)
-	if err != nil && res == nil {
-		return 0, false, err
+func (s *Sandbox) findOpenClawPIDs(ctx context.Context) ([]uint32, error) {
+	res, err := s.Cmd().Run(ctx, "pgrep -f openclaw", nil, "", false)
+	if err != nil {
+		if exitErr, ok := err.(*commands.CommandExitError); ok {
+			if len(exitErr.Result.Stdout) > 0 {
+				return parseOpenClawPIDs(exitErr.Result.Stdout)
+			}
+		}
+		return nil, err
 	}
 
-	matches := listeningPIDPattern.FindSubmatch([]byte(res.Stdout))
-	if len(matches) != 2 {
-		return 0, false, nil
+	return parseOpenClawPIDs(res.Stdout)
+}
+
+func parseOpenClawPIDs(output string) ([]uint32, error) {
+	if strings.TrimSpace(output) == "" {
+		return nil, nil
 	}
 
-	var pid uint32
-	if _, err := fmt.Sscanf(string(matches[1]), "%d", &pid); err != nil {
-		return 0, false, fmt.Errorf("parse listening pid: %w", err)
+	lines := strings.Fields(output)
+	pidSet := make(map[uint32]struct{}, len(lines))
+	pids := make([]uint32, 0, len(lines))
+	for _, line := range lines {
+		pid, err := strconv.ParseUint(line, 10, 32)
+		if err == nil {
+			pid32 := uint32(pid)
+			if _, ok := pidSet[pid32]; ok {
+				continue
+			}
+			pidSet[pid32] = struct{}{}
+			pids = append(pids, pid32)
+		}
 	}
-	return pid, true, nil
+
+	slices.Sort(pids)
+	return pids, nil
+}
+
+func joinPIDs(pids []uint32) string {
+	parts := make([]string, 0, len(pids))
+	for _, pid := range pids {
+		parts = append(parts, strconv.FormatUint(uint64(pid), 10))
+	}
+	return strings.Join(parts, " ")
 }
 
 /*******************************/
@@ -273,7 +303,15 @@ func (s *Sandbox) ClawClient(ctx context.Context) (*gateway.Client, error) {
 		),
 	)
 
-	return client, client.Connect(ctx, fmt.Sprintf("ws://%s:%d", s.ProxyHost, s.ProxyPort))
+	for i := 0; i < 3; i++ {
+		if err := client.Connect(ctx,
+			fmt.Sprintf("ws://%s:%d", s.ProxyHost, s.ProxyPort)); err == nil {
+			break
+		}
+		time.Sleep(time.Second * time.Duration(i))
+	}
+
+	return client, nil
 }
 
 func (s *Sandbox) ChatClient(opts ...ClawOption) *chatcompletions.Client {
