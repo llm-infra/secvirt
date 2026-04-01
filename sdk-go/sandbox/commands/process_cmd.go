@@ -149,6 +149,10 @@ func (c *Cmd) Run(
 			return res, nil
 		}
 
+		if exitErr, ok := err.(*CommandExitError); ok {
+			return &exitErr.Result, nil
+		}
+
 		if !shouldRetryRun(err) || attempt == runRetryMaxAttempts {
 			return nil, err
 		}

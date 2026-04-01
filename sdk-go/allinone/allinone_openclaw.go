@@ -229,11 +229,6 @@ func (s *Sandbox) findOpenClawPIDs(ctx context.Context) (int, error) {
 	return retryFindOpenClawPID(ctx, func() (int, error) {
 		res, err := s.Cmd().Run(ctx, "pgrep -f openclaw-gateway", nil, "", false)
 		if err != nil {
-			if exitErr, ok := err.(*commands.CommandExitError); ok {
-				if len(exitErr.Result.Stdout) > 0 {
-					return strconv.Atoi(strings.TrimSpace(exitErr.Result.Stdout))
-				}
-			}
 			return 0, err
 		}
 
