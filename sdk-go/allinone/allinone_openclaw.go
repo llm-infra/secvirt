@@ -15,6 +15,7 @@ import (
 	"github.com/a3tai/openclaw-go/chatcompletions"
 	"github.com/a3tai/openclaw-go/gateway"
 	"github.com/a3tai/openclaw-go/identity"
+	"github.com/a3tai/openclaw-go/openresponses"
 	"github.com/a3tai/openclaw-go/protocol"
 	"github.com/llm-infra/secvirt/sdk-go/allinone/openclaw"
 	"github.com/llm-infra/secvirt/sdk-go/desktop"
@@ -343,6 +344,26 @@ func (s *Sandbox) ChatClient(opts ...ClawOption) *chatcompletions.Client {
 	}
 
 	return &chatcompletions.Client{
+		BaseURL: s.ProxyBaseURL(),
+		Token:   s.claw.token,
+		HTTPClient: &http.Client{
+			Transport: spec.NewHeaderRoundTripper(
+				spec.GenSandboxHeader(s.claw.port, s.Name, ""),
+				http.DefaultTransport,
+			),
+		},
+		AgentID:    opt.agentID,
+		SessionKey: opt.sessionKey,
+	}
+}
+
+func (s *Sandbox) ResponsesClient(opts ...ClawOption) *openresponses.Client {
+	opt := &ClawOptions{}
+	for _, o := range opts {
+		o(opt)
+	}
+
+	return &openresponses.Client{
 		BaseURL: s.ProxyBaseURL(),
 		Token:   s.claw.token,
 		HTTPClient: &http.Client{
