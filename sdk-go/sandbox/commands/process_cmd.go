@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"runtime"
+	"strings"
 	"time"
 
 	"connectrpc.com/connect"
@@ -18,6 +19,11 @@ import (
 type Cmd struct {
 	client psConnect.ProcessClient
 }
+
+const (
+	runRetryMaxAttempts = 3
+	runRetryBackoff     = 100 * time.Millisecond
+)
 
 func NewCmd(baseUrl, sandboxID, user string) *Cmd {
 	dialer := &net.Dialer{
@@ -135,12 +141,54 @@ func (c *Cmd) Run(
 	stdin bool,
 	opts ...HandleOption,
 ) (*CommandResult, error) {
+	var err error
+	for attempt := 1; attempt <= runRetryMaxAttempts; attempt++ {
+		var res *CommandResult
+		res, err = c.runCommand(ctx, cmd, envs, cwd, stdin, opts...)
+		if err == nil {
+			return res, nil
+		}
+
+		if !shouldRetryRun(err) || attempt == runRetryMaxAttempts {
+			return nil, err
+		}
+
+		timer := time.NewTimer(time.Duration(attempt) * runRetryBackoff)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return nil, ctx.Err()
+		case <-timer.C:
+		}
+	}
+
+	return nil, err
+}
+
+func (c *Cmd) runCommand(
+	ctx context.Context,
+	cmd string,
+	envs map[string]string,
+	cwd string,
+	stdin bool,
+	opts ...HandleOption,
+) (*CommandResult, error) {
 	h, err := c.Start(ctx, cmd, envs, cwd, stdin)
 	if err != nil {
 		return nil, err
 	}
 
 	return h.Wait(ctx, opts...)
+}
+
+func shouldRetryRun(err error) bool {
+	var exitErr *CommandExitError
+	if !errors.As(err, &exitErr) {
+		return false
+	}
+
+	return exitErr.Result.ExitCode == -1 &&
+		strings.Contains(exitErr.Result.Error, "waitid: no child processes")
 }
 
 func (c *Cmd) Connect(ctx context.Context, pid uint32) (*CommandHandle, error) {
