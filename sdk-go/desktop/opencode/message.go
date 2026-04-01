@@ -1,10 +1,13 @@
 package opencode
 
+import "github.com/llm-infra/acp/sdk/go/acp"
+
 const (
-	ToolBash  = "bash"
-	ToolEdit  = "edit"
-	ToolWrite = "write"
-	ToolSkill = "skill"
+	ToolBash      = "bash"
+	ToolEdit      = "edit"
+	ToolWrite     = "write"
+	ToolSkill     = "skill"
+	ToolTodoWrite = "todowrite"
 )
 
 type BashArgs struct {
@@ -25,4 +28,8 @@ type WriteArgs struct {
 
 type SkillArgs struct {
 	Name string `json:"name" mapstructure:"name"`
+}
+
+type TodoWriteArgs struct {
+	Todos []acp.TodoItem `json:"todos" mapstructure:"todos"`
 }
