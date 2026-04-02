@@ -85,7 +85,9 @@ func (s *Sandbox) InitOpenClaw(ctx context.Context, opts ...desktop.Option) erro
 	// 通过进程名检查OpenClaw是否已经在运行
 	// 如果已经运行了，初始化handle、client、chatClient
 	ok, err := s.attachOpenClawIfRunning(ctx)
-	if err != nil || !ok {
+	if (err != nil || !ok) &&
+		!errors.Is(err, context.Canceled) &&
+		!errors.Is(err, context.DeadlineExceeded) {
 		return s.RestartOpenClaw(ctx, opts...)
 	}
 	return nil
@@ -141,6 +143,9 @@ func (s *Sandbox) RestartOpenClaw(ctx context.Context, opts ...desktop.Option) e
 		default:
 			_, err := s.attachOpenClawIfRunning(ctx)
 			if err != nil {
+				if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+					return err
+				}
 				time.Sleep(time.Second)
 				continue
 			}
