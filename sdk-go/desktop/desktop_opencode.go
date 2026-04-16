@@ -307,11 +307,9 @@ func (s *Sandbox) OpenCodeChat(ctx context.Context, content string,
 	var session *oc.Session
 	var err error
 	if len(opt.sessionID) > 0 {
-		session, err = s.ocClient.Session.Get(ctx, opt.sessionID, oc.SessionGetParams{})
-		if err != nil {
-			return nil, err
-		}
-	} else {
+		session, _ = s.ocClient.Session.Get(ctx, opt.sessionID, oc.SessionGetParams{})
+	}
+	if session == nil {
 		session, err = s.ocClient.Session.New(ctx, oc.SessionNewParams{})
 		if err != nil {
 			return nil, err
