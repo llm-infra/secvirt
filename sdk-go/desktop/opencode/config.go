@@ -5,6 +5,7 @@ type Config struct {
 	Model    string              `json:"model"`
 	Provider map[string]Provider `json:"provider"`
 	Mcp      map[string]Mcp      `json:"mcp,omitempty"`
+	Plugin   []string            `json:"plugin,omitempty"`
 }
 
 type Provider struct {
@@ -90,5 +91,14 @@ func WithMcp(name string, mcp Mcp) Option {
 		}
 
 		c.Mcp[name] = mcp
+	}
+}
+
+func WithPlugin(name string) Option {
+	return func(c *Config) {
+		if c.Plugin == nil {
+			c.Plugin = []string{}
+		}
+		c.Plugin = append(c.Plugin, name)
 	}
 }
