@@ -280,10 +280,14 @@ func (s *Sandbox) runOcServerOnce(ctx context.Context, port int, opt *Options) e
 
 func (s *Sandbox) CloseOcServer() error {
 	if s.ocHandle != nil {
-		err := s.ocHandle.Kill()
+		pid := s.ocHandle.Pid()
+		// 先 SIGTERM 整个进程组，再 SIGKILL 兜底
+		s.Cmd().Run(context.Background(),
+			fmt.Sprintf("kill -TERM -- -%d 2>/dev/null; sleep 1; kill -KILL -- -%d 2>/dev/null", pid, pid),
+			nil, "", false)
 		s.ocHandle = nil
 		s.ocClient = nil
-		return err
+		return nil
 	}
 	s.ocClient = nil
 	return nil
