@@ -32,7 +32,6 @@ func NewSandbox(ctx context.Context, opts ...sandbox.Option) (*Sandbox, error) {
 		append(opts,
 			sandbox.WithTemplate(sandbox.TemplateAllInOne),
 			sandbox.WithHealthPorts([]int{
-				codeide.DefaultCodeIDEPort,
 				hostmcp.DefaultMcpServerPort,
 				hostmcp.DefaultMcpRouterPort,
 			}),
