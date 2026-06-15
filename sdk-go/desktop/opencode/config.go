@@ -1,11 +1,12 @@
 package opencode
 
 type Config struct {
-	Schema   string              `json:"$schema"`
-	Model    string              `json:"model"`
-	Provider map[string]Provider `json:"provider"`
-	Mcp      map[string]Mcp      `json:"mcp,omitempty"`
-	Plugin   []string            `json:"plugin,omitempty"`
+	Schema     string              `json:"$schema"`
+	Model      string              `json:"model"`
+	Provider   map[string]Provider `json:"provider"`
+	Mcp        map[string]Mcp      `json:"mcp,omitempty"`
+	Permission any                 `json:"permission,omitempty"`
+	Plugin     []string            `json:"plugin,omitempty"`
 }
 
 type Provider struct {
@@ -59,6 +60,8 @@ type Mcp struct {
 	Enabled     bool              `json:"enabled"`
 }
 
+const PermissionAllowAll = "allow"
+
 func NewConfig(model string, opts ...Option) *Config {
 	cfg := &Config{
 		Schema: "https://opencode.ai/config.json",
@@ -100,5 +103,11 @@ func WithPlugin(name string) Option {
 			c.Plugin = []string{}
 		}
 		c.Plugin = append(c.Plugin, name)
+	}
+}
+
+func WithPermission(permission any) Option {
+	return func(c *Config) {
+		c.Permission = permission
 	}
 }
