@@ -91,6 +91,10 @@ func codexSkillsRoot(cwd string) string {
 	return path.Join(cwd, ".agents", "skills")
 }
 
+func codexExecCommand(content string) string {
+	return fmt.Sprintf("codex exec %s --skip-git-repo-check --sandbox danger-full-access --ask-for-approval never --json",
+		strconv.Quote(content))
+}
 func (s *Sandbox) CodexChat(ctx context.Context, content string,
 	opts ...Option) (*commands.Stream[codex.Message], error) {
 	opt := NewOptions(s.HomeDir())
@@ -99,8 +103,7 @@ func (s *Sandbox) CodexChat(ctx context.Context, content string,
 	}
 
 	handle, err := s.Cmd().Start(ctx,
-		fmt.Sprintf("codex exec %s --skip-git-repo-check --full-auto --json",
-			strconv.Quote(content)),
+		codexExecCommand(content),
 		opt.envs,
 		opt.cwd,
 		opt.stdin,
@@ -120,8 +123,7 @@ func (s *Sandbox) CodexChatWithACPStream(ctx context.Context, content string,
 	}
 
 	handle, err := s.Cmd().Start(ctx,
-		fmt.Sprintf("codex exec %s --skip-git-repo-check --full-auto --json",
-			strconv.Quote(content)),
+		codexExecCommand(content),
 		opt.envs,
 		opt.cwd,
 		opt.stdin,
