@@ -3,6 +3,8 @@ package desktop
 import (
 	"context"
 	"fmt"
+	"io"
+	"path"
 	"path/filepath"
 	"strconv"
 
@@ -28,6 +30,65 @@ func (s *Sandbox) SetCodexConfig(ctx context.Context, config *codex.Config,
 		filepath.Join(opt.cwd, ".codex", "config.toml"),
 		data,
 	)
+}
+
+func (s *Sandbox) SetCodexSkills(ctx context.Context, skills map[string]io.Reader,
+	opts ...Option) error {
+	opt := NewOptions(s.HomeDir())
+	for _, o := range opts {
+		o(opt)
+	}
+
+	skillPath := codexSkillsRoot(opt.cwd)
+	for name, skill := range skills {
+		data, err := io.ReadAll(skill)
+		if err != nil {
+			return err
+		}
+
+		temp := path.Join(skillPath, name)
+		if err = s.Filesystem().Write(ctx, temp, data); err != nil {
+			return err
+		}
+
+		skillName, has, err := checkZipRootDir(ctx, name, data)
+		if err != nil {
+			return err
+		}
+
+		if has {
+			_, err = s.Cmd().Run(ctx,
+				fmt.Sprintf("unzip -o %s && rm -rf %s", temp, temp),
+				nil,
+				skillPath,
+				false,
+			)
+			if err != nil {
+				return err
+			}
+		} else {
+			newDir := path.Join(skillPath, skillName)
+			if _, err = s.Filesystem().Mkdir(ctx, newDir); err != nil {
+				return err
+			}
+			_, err = s.Cmd().Run(ctx,
+				fmt.Sprintf("unzip -o %s -d %s && rm -rf %s",
+					temp, newDir, temp),
+				nil,
+				skillPath,
+				false,
+			)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func codexSkillsRoot(cwd string) string {
+	return path.Join(cwd, ".agents", "skills")
 }
 
 func (s *Sandbox) CodexChat(ctx context.Context, content string,

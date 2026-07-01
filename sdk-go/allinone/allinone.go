@@ -99,6 +99,10 @@ func (s *Sandbox) SetCodexConfig(ctx context.Context, config *codex.Config,
 	return s.desktop.SetCodexConfig(ctx, config, opts...)
 }
 
+func (s *Sandbox) SetCodexSkills(ctx context.Context, skills map[string]io.Reader,
+	opts ...desktop.Option) error {
+	return s.desktop.SetCodexSkills(ctx, skills, opts...)
+}
 func (s *Sandbox) CodexChat(ctx context.Context, content string,
 	opts ...desktop.Option) (*commands.Stream[codex.Message], error) {
 	return s.desktop.CodexChat(ctx, content, opts...)
