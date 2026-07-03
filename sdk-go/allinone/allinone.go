@@ -79,7 +79,7 @@ func (s *Sandbox) Connect(ctx context.Context, endpoint hostmcp.MCPEndpoint,
 }
 
 // desktop
-func (s *Sandbox) SetAgentsmd(ctx context.Context, prompt string,
+func (s *Sandbox) SetAgentsmd(ctx context.Context, prompt []byte,
 	opts ...desktop.Option) error {
 	return s.desktop.SetAgentsmd(ctx, prompt, opts...)
 }

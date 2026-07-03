@@ -85,7 +85,7 @@ func archiveBaseName(name string) string {
 	}
 }
 
-func (s *Sandbox) SetAgentsmd(ctx context.Context, prompt string,
+func (s *Sandbox) SetAgentsmd(ctx context.Context, prompt []byte,
 	opts ...Option) error {
 	opt := NewOptions(s.HomeDir())
 	for _, o := range opts {
