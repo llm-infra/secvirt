@@ -92,8 +92,15 @@ func (s *Sandbox) SetAgentsmd(ctx context.Context, prompt []byte,
 		o(opt)
 	}
 
-	return s.Filesystem().Write(ctx,
-		filepath.Join(opt.cwd, "AGENTS.md"),
-		prompt,
-	)
+	fullPath := filepath.Join(opt.cwd, "AGENTS.md")
+
+	exist, err := s.Filesystem().Exist(ctx, fullPath)
+	if err != nil {
+		return err
+	}
+	if exist {
+		s.Filesystem().Remove(ctx, fullPath)
+	}
+
+	return s.Filesystem().Write(ctx, fullPath, prompt)
 }
