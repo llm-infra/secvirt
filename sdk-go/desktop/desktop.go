@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/llm-infra/secvirt/sdk-go/sandbox"
@@ -82,4 +83,17 @@ func archiveBaseName(name string) string {
 		}
 		base = strings.TrimSuffix(base, ext)
 	}
+}
+
+func (s *Sandbox) SetAgentsmd(ctx context.Context, prompt string,
+	opts ...Option) error {
+	opt := NewOptions(s.HomeDir())
+	for _, o := range opts {
+		o(opt)
+	}
+
+	return s.Filesystem().Write(ctx,
+		filepath.Join(opt.cwd, "AGENTS.md"),
+		prompt,
+	)
 }

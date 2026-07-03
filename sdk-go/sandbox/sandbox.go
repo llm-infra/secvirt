@@ -89,7 +89,12 @@ func NewSandbox(ctx context.Context, opts ...Option) (*Sandbox, error) {
 	}
 
 	sbx.fs = filesystem.NewFileSystem(prxBaseUrl, res.Name, res.User)
-	sbx.cmd = commands.NewCmd(prxBaseUrl, res.Name, res.User)
+	sbx.cmd = commands.NewScheduledCmd(prxBaseUrl, res.Name, res.User, &sandboxAllocator{
+		sandbox:     sbx,
+		user:        res.User,
+		template:    opt.template,
+		healthPorts: opt.healthPorts,
+	})
 	sbx.pty = commands.NewPty(prxBaseUrl, res.Name, res.User)
 	sbx.SandboxDetail = res
 	return sbx, nil

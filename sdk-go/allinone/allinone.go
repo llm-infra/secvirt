@@ -79,6 +79,11 @@ func (s *Sandbox) Connect(ctx context.Context, endpoint hostmcp.MCPEndpoint,
 }
 
 // desktop
+func (s *Sandbox) SetAgentsmd(ctx context.Context, prompt string,
+	opts ...desktop.Option) error {
+	return s.desktop.SetAgentsmd(ctx, prompt, opts...)
+}
+
 func (s *Sandbox) SetClaudeSettings(ctx context.Context, settings *claude.Settings,
 	opts ...desktop.Option) error {
 	return s.desktop.SetClaudeSettings(ctx, settings, opts...)
@@ -103,6 +108,7 @@ func (s *Sandbox) SetCodexSkills(ctx context.Context, skills map[string]io.Reade
 	opts ...desktop.Option) error {
 	return s.desktop.SetCodexSkills(ctx, skills, opts...)
 }
+
 func (s *Sandbox) CodexChat(ctx context.Context, content string,
 	opts ...desktop.Option) (*commands.Stream[codex.Message], error) {
 	return s.desktop.CodexChat(ctx, content, opts...)

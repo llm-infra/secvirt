@@ -49,11 +49,3 @@ func TestCodexChat(t *testing.T) {
 		fmt.Println(json.MarshalString(res))
 	}
 }
-
-func TestCodexExecCommandUsesExplicitFullAccessSandbox(t *testing.T) {
-	cmd := codexExecCommand("hello")
-
-	assert.Contains(t, cmd, "--sandbox danger-full-access")
-	assert.Contains(t, cmd, "--ask-for-approval never")
-	assert.NotContains(t, cmd, "--full-auto")
-}

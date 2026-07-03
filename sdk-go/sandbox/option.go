@@ -1,8 +1,6 @@
 package sandbox
 
-import (
-	"fmt"
-)
+import "fmt"
 
 var (
 	defaultAPIPort   = 8994
@@ -99,6 +97,12 @@ type PackageInstallRequest struct {
 type InstallDetail struct {
 	UserPath     string `json:"user_path,omitempty"`
 	RelativePath string `json:"relative_path,omitempty"`
+}
+
+type SandboxAllocateResponse struct {
+	SandboxID string `json:"sandbox_id"`
+	LeaseID   string `json:"lease_id"`
+	Created   bool   `json:"created"`
 }
 
 type ErrorResponse struct {

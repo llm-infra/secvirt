@@ -44,11 +44,6 @@ type Item struct {
 	Status           string `json:"status,omitempty"`
 	ExitCode         int    `json:"exit_code,omitempty"`
 
-	// mcp_tool_call
-	ToolName  string `json:"tool_name,omitempty"`
-	Arguments string `json:"arguments,omitempty"`
-	Result    string `json:"result,omitempty"`
-
 	// file_change
 	Changes []struct {
 		Path string `json:"path,omitempty"`
@@ -60,57 +55,6 @@ type Item struct {
 		Text      string `json:"text,omitempty"`
 		Completed bool   `json:"completed,omitempty"`
 	} `json:"items,omitempty"`
-}
-
-func (i *Item) UnmarshalJSON(data []byte) error {
-	type itemAlias Item
-	var raw struct {
-		*itemAlias
-		ToolName  json.RawMessage `json:"tool_name"`
-		Name      json.RawMessage `json:"name"`
-		Arguments json.RawMessage `json:"arguments"`
-		Args      json.RawMessage `json:"args"`
-		Input     json.RawMessage `json:"input"`
-		Result    json.RawMessage `json:"result"`
-		Output    json.RawMessage `json:"output"`
-	}
-	raw.itemAlias = (*itemAlias)(i)
-	if err := json.Unmarshal(data, &raw); err != nil {
-		return err
-	}
-
-	i.ToolName = firstRawString(raw.ToolName, raw.Name)
-	i.Arguments = firstRawValue(raw.Arguments, raw.Args, raw.Input)
-	i.Result = firstRawValue(raw.Result, raw.Output)
-	return nil
-}
-
-func firstRawString(values ...json.RawMessage) string {
-	for _, value := range values {
-		if len(value) == 0 || string(value) == "null" {
-			continue
-		}
-		var s string
-		if err := json.Unmarshal(value, &s); err == nil {
-			return s
-		}
-		return string(value)
-	}
-	return ""
-}
-
-func firstRawValue(values ...json.RawMessage) string {
-	for _, value := range values {
-		if len(value) == 0 || string(value) == "null" {
-			continue
-		}
-		var s string
-		if err := json.Unmarshal(value, &s); err == nil {
-			return s
-		}
-		return string(value)
-	}
-	return ""
 }
 
 type Usage struct {

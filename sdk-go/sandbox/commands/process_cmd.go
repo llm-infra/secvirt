@@ -17,7 +17,11 @@ import (
 )
 
 type Cmd struct {
-	client psConnect.ProcessClient
+	baseURL   string
+	sandboxID string
+	user      string
+	client    psConnect.ProcessClient
+	allocator Allocator
 }
 
 const (
@@ -45,6 +49,9 @@ func NewCmd(baseUrl, sandboxID, user string) *Cmd {
 	}
 
 	return &Cmd{
+		baseURL:   baseUrl,
+		sandboxID: sandboxID,
+		user:      user,
 		client: psConnect.NewProcessClient(
 			httpClient,
 			baseUrl,
@@ -109,7 +116,20 @@ func (c *Cmd) Start(
 	cwd string,
 	stdin bool,
 ) (*CommandHandle, error) {
-	stream, err := c.client.Start(ctx, connect.NewRequest(&process.StartRequest{
+	client := c.client
+	release := func(context.Context) error { return nil }
+	if c.allocator != nil {
+		lease, err := c.allocator.Acquire(ctx)
+		if err != nil {
+			return nil, err
+		}
+		release = func(releaseCtx context.Context) error {
+			return c.allocator.Release(releaseCtx, lease.LeaseID)
+		}
+		client = c.clientForSandbox(lease.SandboxID)
+	}
+
+	stream, err := client.Start(ctx, connect.NewRequest(&process.StartRequest{
 		Process: &process.ProcessConfig{
 			Cmd:  "/bin/bash",
 			Args: []string{"-l", "-c", cmd},
@@ -119,20 +139,22 @@ func (c *Cmd) Start(
 		Stdin: &stdin,
 	}))
 	if err != nil {
+		_ = release(context.Background())
 		return nil, err
 	}
 
 	if !stream.Receive() {
+		_ = release(context.Background())
 		return nil, fmt.Errorf("failed to start process: %s", stream.Err())
 	}
 
 	return &CommandHandle{
 		pid:         stream.Msg().Event.GetStart().Pid,
-		kill:        c.Kill,
+		kill:        killWithClient(client),
 		startStream: stream,
+		release:     release,
 	}, nil
 }
-
 func (c *Cmd) Run(
 	ctx context.Context,
 	cmd string,
@@ -149,11 +171,13 @@ func (c *Cmd) Run(
 			return res, nil
 		}
 
-		if exitErr, ok := err.(*CommandExitError); ok {
+		if shouldRetryRun(err) {
+			if attempt == runRetryMaxAttempts {
+				return nil, err
+			}
+		} else if exitErr, ok := err.(*CommandExitError); ok {
 			return &exitErr.Result, nil
-		}
-
-		if !shouldRetryRun(err) || attempt == runRetryMaxAttempts {
+		} else {
 			return nil, err
 		}
 

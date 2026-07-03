@@ -36,7 +36,6 @@ func NewHeaderInterceptor(envdPort int, sandboxID string, user string) *headerIn
 
 func (i *headerInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
 	return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
-		// Set the sandbox header
 		headers := GenSandboxHeader(i.envdPort, i.sandboxID, i.user)
 		for k, v := range headers {
 			req.Header().Set(k, v)
@@ -50,7 +49,6 @@ func (i *headerInterceptor) WrapStreamingClient(next connect.StreamingClientFunc
 	return func(ctx context.Context, spec connect.Spec) connect.StreamingClientConn {
 		conn := next(ctx, spec)
 
-		// Set the sandbox header
 		headers := GenSandboxHeader(i.envdPort, i.sandboxID, i.user)
 		for k, v := range headers {
 			conn.RequestHeader().Set(k, v)

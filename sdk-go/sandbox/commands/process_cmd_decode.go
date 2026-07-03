@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"io"
@@ -11,48 +10,6 @@ import (
 
 type Decoder[T any] interface {
 	Decode(data []byte) (T, error)
-}
-
-type jsonLineBuffer struct {
-	pending []byte
-}
-
-func newJSONLineBuffer() *jsonLineBuffer {
-	return &jsonLineBuffer{}
-}
-
-func (b *jsonLineBuffer) Push(chunk []byte) [][]byte {
-	if len(chunk) == 0 {
-		return nil
-	}
-
-	b.pending = append(b.pending, chunk...)
-	var lines [][]byte
-	for {
-		idx := bytes.IndexByte(b.pending, '\n')
-		if idx < 0 {
-			break
-		}
-
-		line := bytes.TrimSpace(b.pending[:idx])
-		b.pending = b.pending[idx+1:]
-		if len(line) == 0 {
-			continue
-		}
-		if json.Valid(line) {
-			lines = append(lines, append([]byte(nil), line...))
-		}
-	}
-	return lines
-}
-
-func (b *jsonLineBuffer) Flush() [][]byte {
-	line := bytes.TrimSpace(b.pending)
-	b.pending = nil
-	if len(line) == 0 || !json.Valid(line) {
-		return nil
-	}
-	return [][]byte{append([]byte(nil), line...)}
 }
 
 type Stream[T any] struct {
@@ -73,12 +30,11 @@ func NewStream[T any](ctx context.Context, handle *CommandHandle, decoder Decode
 	}
 
 	go func() {
-		buffer := newJSONLineBuffer()
 		_, err := s.handle.Wait(ctx,
 			WithStdout(
 				func(b []byte) {
-					for _, line := range buffer.Push(b) {
-						s.events <- line
+					if json.Valid(b) {
+						s.events <- b
 					}
 				},
 			),
@@ -89,9 +45,6 @@ func NewStream[T any](ctx context.Context, handle *CommandHandle, decoder Decode
 				},
 			),
 		)
-		for _, line := range buffer.Flush() {
-			s.events <- line
-		}
 		s.err = err
 		s.done = true
 		s.handle.kill(context.Background(), s.handle.pid)

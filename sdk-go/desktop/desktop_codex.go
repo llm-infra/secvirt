@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"path"
 	"path/filepath"
 	"strconv"
 
@@ -39,14 +38,14 @@ func (s *Sandbox) SetCodexSkills(ctx context.Context, skills map[string]io.Reade
 		o(opt)
 	}
 
-	skillPath := codexSkillsRoot(opt.cwd)
+	skillPath := filepath.Join(opt.cwd, ".codex", "skills")
 	for name, skill := range skills {
 		data, err := io.ReadAll(skill)
 		if err != nil {
 			return err
 		}
 
-		temp := path.Join(skillPath, name)
+		temp := filepath.Join(skillPath, name)
 		if err = s.Filesystem().Write(ctx, temp, data); err != nil {
 			return err
 		}
@@ -67,7 +66,7 @@ func (s *Sandbox) SetCodexSkills(ctx context.Context, skills map[string]io.Reade
 				return err
 			}
 		} else {
-			newDir := path.Join(skillPath, skillName)
+			newDir := filepath.Join(skillPath, skillName)
 			if _, err = s.Filesystem().Mkdir(ctx, newDir); err != nil {
 				return err
 			}
@@ -87,14 +86,6 @@ func (s *Sandbox) SetCodexSkills(ctx context.Context, skills map[string]io.Reade
 	return nil
 }
 
-func codexSkillsRoot(cwd string) string {
-	return path.Join(cwd, ".agents", "skills")
-}
-
-func codexExecCommand(content string) string {
-	return fmt.Sprintf("codex exec %s --skip-git-repo-check --sandbox danger-full-access --ask-for-approval never --json",
-		strconv.Quote(content))
-}
 func (s *Sandbox) CodexChat(ctx context.Context, content string,
 	opts ...Option) (*commands.Stream[codex.Message], error) {
 	opt := NewOptions(s.HomeDir())
@@ -103,7 +94,8 @@ func (s *Sandbox) CodexChat(ctx context.Context, content string,
 	}
 
 	handle, err := s.Cmd().Start(ctx,
-		codexExecCommand(content),
+		fmt.Sprintf("codex exec %s --skip-git-repo-check --full-auto --json",
+			strconv.Quote(content)),
 		opt.envs,
 		opt.cwd,
 		opt.stdin,
@@ -123,7 +115,8 @@ func (s *Sandbox) CodexChatWithACPStream(ctx context.Context, content string,
 	}
 
 	handle, err := s.Cmd().Start(ctx,
-		codexExecCommand(content),
+		fmt.Sprintf("codex exec %s --skip-git-repo-check --full-auto --json",
+			strconv.Quote(content)),
 		opt.envs,
 		opt.cwd,
 		opt.stdin,
