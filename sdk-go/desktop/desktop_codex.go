@@ -46,7 +46,7 @@ func (s *Sandbox) SetCodexSkills(ctx context.Context, skills map[string]io.Reade
 		}
 
 		temp := filepath.Join(skillPath, name)
-		if exist, err := s.Filesystem().Exist(ctx, temp); err != nil && exist {
+		if exist, err := s.Filesystem().Exist(ctx, temp); err == nil && exist {
 			s.Filesystem().Remove(ctx, temp)
 		}
 		if err = s.Filesystem().Write(ctx, temp, data); err != nil {
@@ -58,8 +58,7 @@ func (s *Sandbox) SetCodexSkills(ctx context.Context, skills map[string]io.Reade
 			return err
 		}
 		newDir := filepath.Join(skillPath, skillName)
-
-		if exist, err := s.Filesystem().Exist(ctx, newDir); err != nil && exist {
+		if exist, err := s.Filesystem().Exist(ctx, newDir); err == nil && exist {
 			s.Filesystem().Remove(ctx, newDir)
 		}
 
@@ -74,7 +73,6 @@ func (s *Sandbox) SetCodexSkills(ctx context.Context, skills map[string]io.Reade
 				return err
 			}
 		} else {
-			newDir := filepath.Join(skillPath, skillName)
 			if _, err = s.Filesystem().Mkdir(ctx, newDir); err != nil {
 				return err
 			}
