@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"sync"
 
 	"connectrpc.com/connect"
 	"github.com/llm-infra/secvirt/sdk-go/sandbox/spec/process"
@@ -36,8 +35,6 @@ type CommandHandle struct {
 	kill          func(context.Context, uint32) error
 	startStream   *connect.ServerStreamForClient[process.StartResponse]
 	connectStream *connect.ServerStreamForClient[process.ConnectResponse]
-	release       func(context.Context) error
-	releaseOnce   sync.Once
 }
 
 func (h *CommandHandle) Pid() uint32 {
@@ -45,12 +42,10 @@ func (h *CommandHandle) Pid() uint32 {
 }
 
 func (c *CommandHandle) Disconnect() error {
-	c.releaseLease()
 	return c.startStream.Close()
 }
 
 func (h *CommandHandle) Wait(ctx context.Context, opts ...HandleOption) (*CommandResult, error) {
-	defer h.releaseLease()
 	opt := &HandleOptions{}
 	for _, o := range opts {
 		o(opt)
@@ -120,15 +115,6 @@ func (h *CommandHandle) Wait(ctx context.Context, opts ...HandleOption) (*Comman
 	}
 
 	return result, nil
-}
-
-func (h *CommandHandle) releaseLease() {
-	if h.release == nil {
-		return
-	}
-	h.releaseOnce.Do(func() {
-		_ = h.release(context.Background())
-	})
 }
 
 func (c *CommandHandle) Kill() error {

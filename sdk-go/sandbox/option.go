@@ -99,12 +99,6 @@ type InstallDetail struct {
 	RelativePath string `json:"relative_path,omitempty"`
 }
 
-type SandboxAllocateResponse struct {
-	SandboxID string `json:"sandbox_id"`
-	LeaseID   string `json:"lease_id"`
-	Created   bool   `json:"created"`
-}
-
 type ErrorResponse struct {
 	Code    int    `json:"code"`
 	Message string `json:"message,omitempty"`
