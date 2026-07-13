@@ -1,2 +1,0 @@
-# secvirt
-secvirt SDK
