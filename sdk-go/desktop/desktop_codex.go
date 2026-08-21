@@ -92,6 +92,49 @@ func (s *Sandbox) SetCodexSkills(ctx context.Context, skills map[string]io.Reade
 	return nil
 }
 
+func (s *Sandbox) SetCodexHooks(ctx context.Context, hooks io.Reader,
+	opts ...Option) error {
+	opt := NewOptions(s.HomeDir())
+	for _, o := range opts {
+		o(opt)
+	}
+
+	hooksPath := filepath.Join(opt.cwd, ".codex", "hooks")
+	data, err := io.ReadAll(hooks)
+	if err != nil {
+		return err
+	}
+
+	temp := filepath.Join(hooksPath, "hooks.zip")
+	if exist, err := s.Filesystem().Exist(ctx, temp); err == nil && exist {
+		s.Filesystem().Remove(ctx, temp)
+	}
+	if err = s.Filesystem().Write(ctx, temp, data); err != nil {
+		return err
+	}
+
+	_, err = s.Cmd().Run(ctx,
+		fmt.Sprintf("unzip -o %s && rm -rf %s", temp, temp),
+		nil,
+		hooksPath,
+		false,
+	)
+	if err != nil {
+		return err
+	}
+
+	_, err = s.Cmd().Run(ctx,
+		fmt.Sprintf("mv %s %s",
+			filepath.Join(hooksPath, "hooks.json"),
+			filepath.Join(opt.cwd, "hooks.json"),
+		),
+		nil,
+		opt.cwd,
+		false,
+	)
+	return err
+}
+
 func (s *Sandbox) CodexChat(ctx context.Context, content string,
 	opts ...Option) (*commands.Stream[codex.Message], error) {
 	opt := NewOptions(s.HomeDir())

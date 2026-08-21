@@ -71,6 +71,7 @@ type SandboxDetail struct {
 	Name           string   `json:"name"`
 	IP             string   `json:"ip"`
 	User           string   `json:"user"`
+	RuntimeUser    string   `json:"runtime_user,omitempty"`
 	CreateAt       string   `json:"create_at"`
 	CpuLimit       int64    `json:"cpu_limit"`
 	MemLimit       uint64   `json:"mem_limit"`
