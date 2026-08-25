@@ -104,7 +104,7 @@ func (s *Sandbox) SetCodexConfig(ctx context.Context, config *codex.Config,
 	return s.desktop.SetCodexConfig(ctx, config, opts...)
 }
 
-func (s *Sandbox) SetCodexSkills(ctx context.Context, skills map[string]io.Reader,
+func (s *Sandbox) SetCodexSkills(ctx context.Context, skills []desktop.SkillPackage,
 	opts ...desktop.Option) error {
 	return s.desktop.SetCodexSkills(ctx, skills, opts...)
 }

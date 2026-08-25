@@ -14,6 +14,7 @@ type Options struct {
 	sessionID         string
 	ocServerRetries   int
 	ocServerRetryWait time.Duration
+	shouldLog         bool
 }
 
 func (o *Options) Cwd() string {
@@ -61,5 +62,11 @@ func WithOcServerRetry(retries int, wait time.Duration) Option {
 	return func(o *Options) {
 		o.ocServerRetries = retries
 		o.ocServerRetryWait = wait
+	}
+}
+
+func WithShouldLog() Option {
+	return func(o *Options) {
+		o.shouldLog = true
 	}
 }

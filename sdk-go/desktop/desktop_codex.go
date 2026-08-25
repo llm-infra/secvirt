@@ -2,15 +2,20 @@ package desktop
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"path/filepath"
 	"strconv"
+	"strings"
 
+	"connectrpc.com/connect"
 	"github.com/BurntSushi/toml"
 	"github.com/llm-infra/acp/sdk/go/acp"
 	"github.com/llm-infra/secvirt/sdk-go/desktop/codex"
 	"github.com/llm-infra/secvirt/sdk-go/sandbox/commands"
+	"github.com/sirupsen/logrus"
 )
 
 func (s *Sandbox) SetCodexConfig(ctx context.Context, config *codex.Config,
@@ -31,7 +36,13 @@ func (s *Sandbox) SetCodexConfig(ctx context.Context, config *codex.Config,
 	)
 }
 
-func (s *Sandbox) SetCodexSkills(ctx context.Context, skills map[string]io.Reader,
+type SkillPackage struct {
+	Name   string
+	Hash   string
+	Reader io.Reader
+}
+
+func (s *Sandbox) SetCodexSkills(ctx context.Context, skills []SkillPackage,
 	opts ...Option) error {
 	opt := NewOptions(s.HomeDir())
 	for _, o := range opts {
@@ -39,32 +50,81 @@ func (s *Sandbox) SetCodexSkills(ctx context.Context, skills map[string]io.Reade
 	}
 
 	skillPath := filepath.Join(opt.cwd, ".codex", "skills")
-	for name, skill := range skills {
-		data, err := io.ReadAll(skill)
+	if _, err := s.Filesystem().Mkdir(ctx, skillPath); err != nil {
+		return err
+	}
+
+	existingSkills, err := s.Filesystem().List(ctx, skillPath, 1)
+	if err != nil {
+		return err
+	}
+
+	desiredSkills := make(map[string]struct{}, len(skills)*2)
+	for _, skill := range skills {
+		desiredSkills[skill.Name] = struct{}{}
+		desiredSkills[archiveBaseName(skill.Name)] = struct{}{}
+	}
+
+	for _, existingSkill := range existingSkills {
+		if _, ok := desiredSkills[existingSkill.Name]; ok {
+			continue
+		}
+		if opt.shouldLog {
+			logrus.WithContext(ctx).Infof("skill should removed: %s", existingSkill.Name)
+		}
+		if err := s.Filesystem().Remove(ctx, existingSkill.Path); err != nil {
+			return err
+		}
+	}
+
+	for _, skill := range skills {
+		temp := filepath.Join(skillPath, skill.Name)
+		exist, err := s.Filesystem().Exist(ctx, temp)
+		if err != nil && connect.CodeOf(err) != connect.CodeNotFound {
+			return err
+		}
+		if exist {
+			installedPackage, err := s.Filesystem().Read(ctx, temp)
+			if err != nil {
+				return err
+			}
+			installedHash := sha256.Sum256(installedPackage)
+			if strings.EqualFold(hex.EncodeToString(installedHash[:]), skill.Hash) {
+				if opt.shouldLog {
+					logrus.WithContext(ctx).Infof("skill has installed, skip: %s", skill.Name)
+				}
+				continue
+			}
+		}
+
+		data, err := io.ReadAll(skill.Reader)
 		if err != nil {
 			return err
 		}
 
-		temp := filepath.Join(skillPath, name)
-		if exist, err := s.Filesystem().Exist(ctx, temp); err == nil && exist {
-			s.Filesystem().Remove(ctx, temp)
+		skillName, has, err := checkZipRootDir(ctx, skill.Name, data)
+		if err != nil {
+			return err
+		}
+		newDir := filepath.Join(skillPath, skillName)
+
+		if exist {
+			if err = s.Filesystem().Remove(ctx, temp); err != nil {
+				return err
+			}
+		}
+		if exist, err := s.Filesystem().Exist(ctx, newDir); err == nil && exist {
+			if err = s.Filesystem().Remove(ctx, newDir); err != nil {
+				return err
+			}
 		}
 		if err = s.Filesystem().Write(ctx, temp, data); err != nil {
 			return err
 		}
 
-		skillName, has, err := checkZipRootDir(ctx, name, data)
-		if err != nil {
-			return err
-		}
-		newDir := filepath.Join(skillPath, skillName)
-		if exist, err := s.Filesystem().Exist(ctx, newDir); err == nil && exist {
-			s.Filesystem().Remove(ctx, newDir)
-		}
-
 		if has {
 			_, err = s.Cmd().Run(ctx,
-				fmt.Sprintf("unzip -o %s && rm -rf %s", temp, temp),
+				fmt.Sprintf("unzip -o %s", temp),
 				nil,
 				skillPath,
 				false,
@@ -77,8 +137,7 @@ func (s *Sandbox) SetCodexSkills(ctx context.Context, skills map[string]io.Reade
 				return err
 			}
 			_, err = s.Cmd().Run(ctx,
-				fmt.Sprintf("unzip -o %s -d %s && rm -rf %s",
-					temp, newDir, temp),
+				fmt.Sprintf("unzip -o %s -d %s", temp, newDir),
 				nil,
 				skillPath,
 				false,
@@ -100,21 +159,29 @@ func (s *Sandbox) SetCodexHooks(ctx context.Context, hooks io.Reader,
 	}
 
 	hooksPath := filepath.Join(opt.cwd, ".codex", "hooks")
+	temp := filepath.Join(hooksPath, "hooks.zip")
+	exist, err := s.Filesystem().Exist(ctx, temp)
+	if err != nil && connect.CodeOf(err) != connect.CodeNotFound {
+		return err
+	}
+	if exist {
+		if opt.shouldLog {
+			logrus.WithContext(ctx).Infof("hooks has installed, skip")
+		}
+
+		return nil
+	}
+
 	data, err := io.ReadAll(hooks)
 	if err != nil {
 		return err
-	}
-
-	temp := filepath.Join(hooksPath, "hooks.zip")
-	if exist, err := s.Filesystem().Exist(ctx, temp); err == nil && exist {
-		s.Filesystem().Remove(ctx, temp)
 	}
 	if err = s.Filesystem().Write(ctx, temp, data); err != nil {
 		return err
 	}
 
 	_, err = s.Cmd().Run(ctx,
-		fmt.Sprintf("unzip -o %s && rm -rf %s", temp, temp),
+		fmt.Sprintf("unzip -o %s", temp),
 		nil,
 		hooksPath,
 		false,
