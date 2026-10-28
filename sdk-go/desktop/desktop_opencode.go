@@ -182,12 +182,17 @@ func runOcServerWithRetry(ctx context.Context, retries int, wait time.Duration,
 
 func (s *Sandbox) runOcServerOnce(ctx context.Context, port int, opt *Options) error {
 	parentCtx := ctx
-	ctx, cancel := context.WithTimeout(parentCtx, time.Second*10)
-	defer cancel()
+	// The timeout is only for waiting until the server announces its URL.  Do
+	// not pass this deadline to Cmd.Start/Wait: those APIs keep the
+	// opencode serve process attached to their context, so doing so would kill
+	// the long-running server after 10 seconds even after it started
+	// successfully.
+	startupCtx, cancelStartup := context.WithTimeout(parentCtx, time.Second*10)
+	defer cancelStartup()
 
 	s.ocClient = nil
 
-	handle, err := s.Cmd().Start(ctx,
+	handle, err := s.Cmd().Start(parentCtx,
 		fmt.Sprintf("opencode serve --hostname 0.0.0.0 --port %d", port),
 		opt.envs,
 		opt.cwd,
@@ -213,7 +218,7 @@ func (s *Sandbox) runOcServerOnce(ctx context.Context, port int, opt *Options) e
 			}
 		}
 
-		_, waitErr := s.ocHandle.Wait(ctx,
+		_, waitErr := s.ocHandle.Wait(startupCtx,
 			commands.WithStdout(
 				func(b []byte) {
 					urlStr := rxStrict.Find(b)
@@ -239,12 +244,12 @@ func (s *Sandbox) runOcServerOnce(ctx context.Context, port int, opt *Options) e
 	}()
 
 	select {
-	case <-ctx.Done():
+	case <-startupCtx.Done():
 		if err := parentCtx.Err(); err != nil {
 			return err
 		}
 
-		err := ctx.Err()
+		err := startupCtx.Err()
 		if errors.Is(err, context.DeadlineExceeded) {
 			return &ocServerAttemptError{err: err, retryable: true}
 		}
