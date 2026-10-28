@@ -267,7 +267,7 @@ func (s *Sandbox) runOcServerOnce(ctx context.Context, port int, opt *Options) e
 
 		tr := otelhttp.NewTransport(
 			spec.NewHeaderRoundTripper(
-				spec.GenSandboxHeader(port, s.Name, ""),
+				spec.GenSandboxHeader(port, s.Name, s.User),
 				http.DefaultTransport,
 			),
 			otelhttp.WithTracerProvider(otel.Standard().TracerProvider),

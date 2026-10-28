@@ -80,5 +80,9 @@ func (h *headerRoundTripper) RoundTrip(req *http.Request) (*http.Response, error
 			req.Header.Set(k, v)
 		}
 	}
+	// Forward the caller's business identity (x-uid/x-org and EXT) on every
+	// proxied HTTP request. ext.InjectHeader also applies the standard
+	// identity fallback: x-org is used when x-uid is absent.
+	ext.InjectHeader(req.Context(), req.Header)
 	return h.rt.RoundTrip(req)
 }
