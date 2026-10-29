@@ -2,6 +2,7 @@ package desktop
 
 import (
 	"context"
+	crand "crypto/rand"
 	"errors"
 	"fmt"
 	"io"
@@ -139,12 +140,29 @@ func (s *Sandbox) RunOcServer(ctx context.Context, port int, opts ...Option) (er
 		o(opt)
 	}
 
+	attempt := 0
 	return runOcServerWithRetry(ctx, opt.ocServerRetries, opt.ocServerRetryWait,
 		func() error {
-			return s.runOcServerOnce(ctx, port, opt)
+			// A failed start can leave the old process alive (for example when
+			// the command reports "address already in use"). Never retry the
+			// same requested port: another server in the sandbox may own it.
+			p := port
+			if attempt > 0 {
+				p = nextOcServerPort()
+			}
+			attempt++
+			return s.runOcServerOnce(ctx, p, opt)
 		},
 		s.CloseOcServer,
 	)
+}
+
+func nextOcServerPort() int {
+	var b [2]byte
+	if _, err := crand.Read(b[:]); err == nil {
+		return 1024 + int(uint16(b[0])<<8|uint16(b[1]))%(65535-1024)
+	}
+	return 1024 + int(time.Now().UnixNano()%(65535-1024))
 }
 
 func runOcServerWithRetry(ctx context.Context, retries int, wait time.Duration,
@@ -158,14 +176,16 @@ func runOcServerWithRetry(ctx context.Context, retries int, wait time.Duration,
 		if err == nil {
 			return nil
 		}
+		// Always clean up a partially started server, including the final
+		// failed attempt. Otherwise its child process can keep the port busy
+		// for the next agent run.
+		if cleanup != nil {
+			cleanup()
+		}
 
 		var attemptErr *ocServerAttemptError
 		if !errors.As(err, &attemptErr) || !attemptErr.retryable || attempt == retries {
 			return err
-		}
-
-		if cleanup != nil {
-			cleanup()
 		}
 
 		timer := time.NewTimer(wait)
